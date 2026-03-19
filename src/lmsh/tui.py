@@ -1,5 +1,9 @@
 """Interactive TUI for chatting with language models."""
 
+from lmtk import get_response
+from lmtk.datatypes import AssistantMessage, Message, UserMessage
+from lmtk.errors import AuthenticationError, PermissionError as LMTKPermissionError
+from lmtk.provider import load_provider
 from prompt_toolkit import PromptSession
 from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.key_binding import KeyBindings
@@ -8,7 +12,7 @@ from rich.live import Live
 from rich.markdown import Markdown
 from rich.rule import Rule
 
-from lmtk import get_response
+from lmsh.secrets import save_api_key
 
 AVAILABLE_MODELS = [
     "mistral:mistral-small-2603",
@@ -82,7 +86,7 @@ def _switch_model(console: Console, current_model: str) -> str:
     return current_model
 
 
-def _stream_response(console: Console, model: str, messages: list[dict]) -> str:
+def _stream_response(console: Console, model: str, messages: list[Message]) -> str:
     """Stream an assistant response and render it with Rich.
 
     Args:
@@ -111,7 +115,7 @@ def run(model: str) -> None:
         model: Initial model identifier (provider:model).
     """
     console = Console()
-    messages: list[dict] = []
+    messages: list[Message] = []
     session_state: dict = {"action": None}
 
     completer = WordCompleter(COMMANDS, sentence=True)
@@ -167,7 +171,7 @@ def run(model: str) -> None:
             continue
 
         # Regular message.
-        messages.append({"role": "user", "content": text})
+        messages.append(UserMessage(content=text))
         console.print()
         console.print(Rule("[bold blue]You[/bold blue]"))
         console.print(Markdown(text))
@@ -176,10 +180,30 @@ def run(model: str) -> None:
 
         try:
             response_text = _stream_response(console, model, messages)
+        except (AuthenticationError, LMTKPermissionError) as exc:
+            provider_name = exc.provider.removesuffix("Provider").lower()
+            provider_cls = load_provider(provider_name)
+            key_name = provider_cls.api_key_name
+
+            console.print(
+                f"\n[bold red]Error:[/bold red] API key for [bold]{provider_name}[/bold] "
+                "is missing or incorrect."
+            )
+            console.print(f"[dim]Expected environment variable:[/dim] {key_name}\n")
+
+            key_session = PromptSession()
+            api_key = key_session.prompt(f"Enter your {key_name}: ").strip()
+
+            if api_key:
+                save_api_key(key_name, api_key)
+                console.print("[green]Key saved to ~/.config/lmsh/.env[/green]\n")
+
+            messages.pop()
+            continue
         except Exception as exc:
             console.print(f"\n[bold red]Error:[/bold red] {exc}\n")
             messages.pop()
             continue
 
-        messages.append({"role": "assistant", "content": response_text})
+        messages.append(AssistantMessage(content=response_text))
         console.print()

@@ -2,6 +2,7 @@
 
 import argparse
 
+from lmsh.secrets import load_env
 from lmsh.tui import run
 
 DEFAULT_MODEL = "mistral:mistral-small-2603"
@@ -20,4 +21,5 @@ def main():
         help=f"provider:model identifier (default: {DEFAULT_MODEL})",
     )
     args = parser.parse_args()
+    load_env()
     run(model=args.model)
