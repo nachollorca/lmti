@@ -17,11 +17,3 @@ lmsh
 # Start with a specific model
 lmsh -m vertex:gemini-2.5-flash
 ```
-
-### Commands
-
-| Command  | Shortcut | Description               |
-|----------|----------|---------------------------|
-| `/exit`  | Ctrl+Q   | Exit the application      |
-| `/new`   | Ctrl+N   | Reset the conversation    |
-| `/model` | Ctrl+O   | Switch to a different model |
