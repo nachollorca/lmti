@@ -34,6 +34,14 @@ def save_default_model(model_id: str) -> None:
     _save_setting("DEFAULT_MODEL", model_id)
 
 
+def save_render_setting(enabled: bool) -> None:
+    """Persist the markdown rendering setting to ``~/.config/lmsh/.env``.
+
+    The value is stored as "true" or "false".
+    """
+    _save_setting("MARKDOWN_RENDER", "true" if enabled else "false")
+
+
 def save_api_key(key_name: str, key_value: str) -> None:
     """Persist an API key to ``~/.config/lmsh/.env`` and set it in the process.
 
