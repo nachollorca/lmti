@@ -12,7 +12,7 @@ from rich.live import Live
 from rich.markdown import Markdown
 from rich.rule import Rule
 
-from lmsh.secrets import save_api_key
+from lmsh.secrets import save_api_key, save_default_model
 
 AVAILABLE_MODELS = [
     "mistral:mistral-small-2603",
@@ -108,6 +108,79 @@ def _stream_response(console: Console, model: str, messages: list[Message]) -> s
     return full_response
 
 
+def _handle_action(
+    action: str | None, console: Console, messages: list[Message], model: str
+) -> tuple[bool, str, bool]:
+    """Handle actions triggered by key bindings.
+
+    Returns:
+        A tuple of (should_break, new_model, should_continue).
+    """
+    if action == "exit":
+        return True, model, False
+    if action == "new":
+        messages.clear()
+        console.print()
+        console.print(Rule("[bold]new conversation[/bold]"))
+        console.print()
+        return False, model, True
+    if action == "model":
+        model = _switch_model(console, model)
+        save_default_model(model)
+        console.print(f"\n[dim]Model switched to:[/dim] {model}\n")
+        return False, model, True
+    return False, model, False
+
+
+def _handle_command(
+    text: str, console: Console, messages: list[Message], model: str
+) -> tuple[bool, str, bool]:
+    """Handle slash commands typed explicitly.
+
+    Returns:
+        A tuple of (should_break, new_model, should_continue).
+    """
+    if text == "/exit":
+        return True, model, False
+    if text == "/new":
+        messages.clear()
+        console.print()
+        console.print(Rule("[bold]new conversation[/bold]"))
+        console.print()
+        return False, model, True
+    if text == "/model":
+        model = _switch_model(console, model)
+        console.print(f"\n[dim]Model switched to:[/dim] {model}\n")
+        return False, model, True
+    return False, model, False
+
+
+def _handle_error(exc: Exception, console: Console, messages: list[Message]) -> None:
+    """Handle errors during response generation."""
+    if isinstance(exc, (AuthenticationError, LMTKPermissionError)):
+        provider_name = exc.provider.removesuffix("Provider").lower()
+        provider_cls = load_provider(provider_name)
+        key_name = provider_cls.api_key_name
+
+        console.print(
+            f"\n[bold red]Error:[/bold red] API key for [bold]{provider_name}[/bold] "
+            "is missing or incorrect."
+        )
+        console.print(f"[dim]Expected environment variable:[/dim] {key_name}\n")
+
+        key_session = PromptSession()
+        api_key = key_session.prompt(f"Enter your {key_name}: ").strip()
+
+        if api_key:
+            save_api_key(key_name, api_key)
+            console.print("[green]Key saved to ~/.config/lmsh/.env[/green]\n")
+    else:
+        console.print(f"\n[bold red]Error:[/bold red] {exc}\n")
+
+    if messages:
+        messages.pop()
+
+
 def run(model: str) -> None:
     """Run the interactive REPL.
 
@@ -138,18 +211,12 @@ def run(model: str) -> None:
             break
 
         # Handle key-binding triggered actions.
-        action = session_state["action"]
-        if action == "exit":
+        should_break, model, should_continue = _handle_action(
+            session_state["action"], console, messages, model
+        )
+        if should_break:
             break
-        if action == "new":
-            messages.clear()
-            console.print()
-            console.print(Rule("[bold]new conversation[/bold]"))
-            console.print()
-            continue
-        if action == "model":
-            model = _switch_model(console, model)
-            console.print(f"\n[dim]Model switched to:[/dim] {model}\n")
+        if should_continue:
             continue
 
         text = user_input.strip()
@@ -157,17 +224,10 @@ def run(model: str) -> None:
             continue
 
         # Handle slash commands typed explicitly.
-        if text == "/exit":
+        should_break, model, should_continue = _handle_command(text, console, messages, model)
+        if should_break:
             break
-        if text == "/new":
-            messages.clear()
-            console.print()
-            console.print(Rule("[bold]new conversation[/bold]"))
-            console.print()
-            continue
-        if text == "/model":
-            model = _switch_model(console, model)
-            console.print(f"\n[dim]Model switched to:[/dim] {model}\n")
+        if should_continue:
             continue
 
         # Regular message.
@@ -180,30 +240,7 @@ def run(model: str) -> None:
 
         try:
             response_text = _stream_response(console, model, messages)
-        except (AuthenticationError, LMTKPermissionError) as exc:
-            provider_name = exc.provider.removesuffix("Provider").lower()
-            provider_cls = load_provider(provider_name)
-            key_name = provider_cls.api_key_name
-
-            console.print(
-                f"\n[bold red]Error:[/bold red] API key for [bold]{provider_name}[/bold] "
-                "is missing or incorrect."
-            )
-            console.print(f"[dim]Expected environment variable:[/dim] {key_name}\n")
-
-            key_session = PromptSession()
-            api_key = key_session.prompt(f"Enter your {key_name}: ").strip()
-
-            if api_key:
-                save_api_key(key_name, api_key)
-                console.print("[green]Key saved to ~/.config/lmsh/.env[/green]\n")
-
-            messages.pop()
-            continue
+            messages.append(AssistantMessage(content=response_text))
+            console.print()
         except Exception as exc:
-            console.print(f"\n[bold red]Error:[/bold red] {exc}\n")
-            messages.pop()
-            continue
-
-        messages.append(AssistantMessage(content=response_text))
-        console.print()
+            _handle_error(exc, console, messages)

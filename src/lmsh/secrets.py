@@ -19,11 +19,19 @@ def load_env() -> None:
     """
     if not ENV_PATH.exists():
         ENV_PATH.parent.mkdir(parents=True, exist_ok=True)
-        ENV_PATH.touch()
-        return
+        ENV_PATH.write_text("DEFAULT_MODEL=mistral:mistral-small-2603\n")
 
     for key, value in _parse_env(ENV_PATH).items():
         os.environ.setdefault(key, value)
+
+
+def save_default_model(model_id: str) -> None:
+    """Persist the default model to ``~/.config/lmsh/.env``.
+
+    The value is also injected into ``os.environ`` so it is available
+    immediately.
+    """
+    _save_setting("DEFAULT_MODEL", model_id)
 
 
 def save_api_key(key_name: str, key_value: str) -> None:
@@ -33,10 +41,15 @@ def save_api_key(key_name: str, key_value: str) -> None:
     is appended.  The value is also injected into ``os.environ`` so it is
     available immediately.
     """
-    os.environ[key_name] = key_value
+    _save_setting(key_name, key_value)
+
+
+def _save_setting(key: str, value: str) -> None:
+    """Helper to save a setting to the .env file."""
+    os.environ[key] = value
 
     env_vars = _parse_env(ENV_PATH) if ENV_PATH.exists() else {}
-    env_vars[key_name] = key_value
+    env_vars[key] = value
 
     lines = [f"{k}={v}" for k, v in env_vars.items()]
     ENV_PATH.write_text("\n".join(lines) + "\n")
