@@ -1,19 +1,17 @@
-# lmsh
-
-Language Models, from the terminal.
+# Language Model Terminal Interface
 
 ## Install
 
 ```bash
-uv tool install lmsh
+uv tool install lmti
 ```
 
 ## Usage
 
 ```bash
 # Start with the default model (mistral:mistral-small-2603)
-lmsh
+lmti
 
 # Start with a specific model
-lmsh -m vertex:gemini-2.5-flash
+lmti -m vertex:gemini-2.5-flash
 ```

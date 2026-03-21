@@ -5,10 +5,10 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum, auto
 
-from lmtk import get_response
-from lmtk.datatypes import AssistantMessage, Message, UserMessage
-from lmtk.errors import AuthenticationError, PermissionError as LMTKPermissionError
-from lmtk.provider import load_provider
+from lmdk import complete
+from lmdk.datatypes import AssistantMessage, Message, UserMessage
+from lmdk.errors import AuthenticationError, PermissionError as lmdkPermissionError
+from lmdk.provider import load_provider
 from prompt_toolkit import PromptSession
 from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.key_binding import KeyBindings
@@ -18,7 +18,7 @@ from rich.live import Live
 from rich.markdown import Markdown
 from rich.rule import Rule
 
-from lmsh.secrets import save_api_key, save_default_model, save_render_setting
+from lmti.secrets import save_api_key, save_default_model, save_render_setting
 
 AVAILABLE_MODELS = [
     "mistral:mistral-small-2603",
@@ -141,11 +141,11 @@ def _stream_response(
     Returns:
         The full assistant response text.
     """
-    token_stream = get_response(model=model, messages=messages, stream=True)
+    token_stream = complete(model=model, messages=messages, stream=True)
 
     full_response = ""
     renderable = Markdown(full_response) if render else full_response
-    with Live(renderable, console=console, refresh_per_second=5) as live:
+    with Live(renderable, console=console, refresh_per_second=15) as live:
         for token in token_stream:
             full_response += token
             live.update(Markdown(full_response) if render else full_response)
@@ -194,7 +194,7 @@ def _handle_command(command: str, state: SessionState) -> LoopSignal:
 
 def _handle_error(exc: Exception, state: SessionState) -> None:
     """Handle errors during response generation."""
-    if isinstance(exc, (AuthenticationError, LMTKPermissionError)):
+    if isinstance(exc, (AuthenticationError, lmdkPermissionError)):
         provider_name = exc.provider.removesuffix("Provider").lower()
         provider_cls = load_provider(provider_name)
         key_name = provider_cls.api_key_name
@@ -210,7 +210,7 @@ def _handle_error(exc: Exception, state: SessionState) -> None:
 
         if api_key:
             save_api_key(key_name, api_key)
-            state.console.print("[green]Key saved to ~/.config/lmsh/.env[/green]\n")
+            state.console.print("[green]Key saved to ~/.config/lmti/.env[/green]\n")
     else:
         state.console.print(f"\n[bold red]Error:[/bold red] {exc}\n")
 
@@ -255,7 +255,7 @@ def run(model: str) -> None:
     style = Style.from_dict({"prompt": "ansigreen"})
     session = PromptSession(key_bindings=kb, completer=completer, style=style)
 
-    state.console.print(Rule("[bold]lmsh[/bold]"))
+    state.console.print(Rule("[bold]lmti[/bold]"))
     state.console.print(f"[dim]Model:[/dim] {model}")
     state.console.print("[dim]Alt+Enter[/dim] for newlines  [dim]Forward slash[/dim] for commands")
     state.console.print()

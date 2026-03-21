@@ -1,17 +1,17 @@
-"""Secret management for lmsh.
+"""Secret management for lmti.
 
-Loads and persists API keys from ``~/.config/lmsh/.env`` so that credentials
+Loads and persists API keys from ``~/.config/lmti/.env`` so that credentials
 survive across sessions without requiring manual shell-level configuration.
 """
 
 import os
 from pathlib import Path
 
-ENV_PATH = Path.home() / ".config" / "lmsh" / ".env"
+ENV_PATH = Path.home() / ".config" / "lmti" / ".env"
 
 
 def load_env() -> None:
-    """Load environment variables from ``~/.config/lmsh/.env``.
+    """Load environment variables from ``~/.config/lmti/.env``.
 
     Creates the file and parent directories when they do not exist.
     Existing environment variables are **not** overwritten (``os.environ``
@@ -26,7 +26,7 @@ def load_env() -> None:
 
 
 def save_default_model(model_id: str) -> None:
-    """Persist the default model to ``~/.config/lmsh/.env``.
+    """Persist the default model to ``~/.config/lmti/.env``.
 
     The value is also injected into ``os.environ`` so it is available
     immediately.
@@ -35,7 +35,7 @@ def save_default_model(model_id: str) -> None:
 
 
 def save_render_setting(enabled: bool) -> None:
-    """Persist the markdown rendering setting to ``~/.config/lmsh/.env``.
+    """Persist the markdown rendering setting to ``~/.config/lmti/.env``.
 
     The value is stored as "true" or "false".
     """
@@ -43,7 +43,7 @@ def save_render_setting(enabled: bool) -> None:
 
 
 def save_api_key(key_name: str, key_value: str) -> None:
-    """Persist an API key to ``~/.config/lmsh/.env`` and set it in the process.
+    """Persist an API key to ``~/.config/lmti/.env`` and set it in the process.
 
     If the key already exists in the file it is updated in place; otherwise it
     is appended.  The value is also injected into ``os.environ`` so it is

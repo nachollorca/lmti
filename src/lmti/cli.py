@@ -1,19 +1,19 @@
-"""CLI entry point for lmsh."""
+"""CLI entry point for lmti."""
 
 import argparse
 import os
 
-from lmsh.secrets import load_env
-from lmsh.tui import run
+from lmti.secrets import load_env
+from lmti.tui import run
 
 
 def main():
-    """Launch the lmsh interactive REPL."""
+    """Launch the lmti interactive REPL."""
     load_env()
     default_model = os.environ.get("DEFAULT_MODEL", "mistral:mistral-small-2603")
 
     parser = argparse.ArgumentParser(
-        prog="lmsh",
+        prog="lmti",
         description="Language Models, from the terminal.",
     )
     parser.add_argument(
