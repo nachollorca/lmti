@@ -141,7 +141,7 @@ def _stream_response(
     Returns:
         The full assistant response text.
     """
-    token_stream = complete(model=model, messages=messages, stream=True)
+    token_stream = complete(model=model, prompt=messages, stream=True)
 
     full_response = ""
     renderable = Markdown(full_response) if render else full_response

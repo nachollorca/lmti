@@ -32,4 +32,4 @@ run file:
     uv run --env-file .env {{file}}
 
 install:
-    uv tool install --editable . --force
+    uv tool install --editable . --force --no-cache
