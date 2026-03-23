@@ -1,16 +1,14 @@
 """CLI entry point for lmti."""
 
 import argparse
-import os
 
-from lmti.secrets import load_env
+from lmti.config import Config
 from lmti.tui import run
 
 
 def main():
     """Launch the lmti interactive REPL."""
-    load_env()
-    default_model = os.environ.get("DEFAULT_MODEL", "mistral:mistral-small-2603")
+    config = Config.load()
 
     parser = argparse.ArgumentParser(
         prog="lmti",
@@ -19,8 +17,13 @@ def main():
     parser.add_argument(
         "-m",
         "--model",
-        default=default_model,
-        help=f"provider:model identifier (default: {default_model})",
+        default=config.settings.model,
+        help=f"provider:model identifier (default: {config.settings.model})",
     )
     args = parser.parse_args()
-    run(model=args.model)
+
+    # Override config with CLI argument if provided
+    if args.model:
+        config.settings.model = args.model
+
+    run(config=config)

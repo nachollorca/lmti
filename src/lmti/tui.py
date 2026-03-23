@@ -1,8 +1,5 @@
 """Interactive TUI for chatting with language models."""
 
-from __future__ import annotations
-
-from dataclasses import dataclass, field
 from enum import Enum, auto
 
 from lmdk import complete
@@ -18,13 +15,7 @@ from rich.live import Live
 from rich.markdown import Markdown
 from rich.rule import Rule
 
-from lmti.secrets import save_api_key, save_default_model, save_render_setting
-
-AVAILABLE_MODELS = [
-    "mistral:mistral-small-2603",
-    "mistral:mistral-large-2512vertex",
-    "vertex:gemini-2.5-flash",
-]
+from lmti.config import Config
 
 COMMAND_META = {
     "/exit": "Exit the application (Ctrl+Q)",
@@ -42,16 +33,6 @@ class LoopSignal(Enum):
     CONTINUE = auto()  # Skip to next iteration.
     BREAK = auto()  # Exit the loop.
     NOOP = auto()  # Not a command; proceed with normal message flow.
-
-
-@dataclass
-class SessionState:
-    """Mutable state for the interactive session."""
-
-    model: str
-    render: bool
-    messages: list[Message] = field(default_factory=list)
-    console: Console = field(default_factory=Console)
 
 
 def _build_key_bindings(session_state: dict) -> KeyBindings:
@@ -89,34 +70,30 @@ def _build_key_bindings(session_state: dict) -> KeyBindings:
     return kb
 
 
-def _switch_model(console: Console, current_model: str) -> str:
+def _switch_model(console: Console, config: Config) -> str:
     """Prompt the user to pick a new model.
-
-    Args:
-        console: Rich console for output.
-        current_model: The currently active model identifier.
 
     Returns:
         The newly selected model identifier.
     """
     console.print()
     console.print("[bold]Available models:[/bold]")
-    for i, m in enumerate(AVAILABLE_MODELS, 1):
-        marker = " [dim](current)[/dim]" if m == current_model else ""
+    for i, m in enumerate(config.models, 1):
+        marker = " [dim](current)[/dim]" if m == config.settings.model else ""
         console.print(f"  {i}. {m}{marker}")
-    console.print(f"  {len(AVAILABLE_MODELS) + 1}. Enter a custom model")
+    console.print(f"  {len(config.models) + 1}. Enter a custom model")
     console.print()
 
-    model_completer = WordCompleter(AVAILABLE_MODELS)
+    model_completer = WordCompleter(config.models)
     session = PromptSession()
     choice = session.prompt("Select model (number or identifier): ", completer=model_completer)
     choice = choice.strip()
 
     if choice.isdigit():
         idx = int(choice)
-        if 1 <= idx <= len(AVAILABLE_MODELS):
-            return AVAILABLE_MODELS[idx - 1]
-        if idx == len(AVAILABLE_MODELS) + 1:
+        if 1 <= idx <= len(config.models):
+            return config.models[idx - 1]
+        if idx == len(config.models) + 1:
             custom = session.prompt("Enter model identifier (provider:model): ")
             return custom.strip()
 
@@ -124,19 +101,13 @@ def _switch_model(console: Console, current_model: str) -> str:
     if choice:
         return choice
 
-    return current_model
+    return config.settings.model
 
 
 def _stream_response(
     console: Console, model: str, messages: list[Message], render: bool = True
 ) -> str:
     """Stream an assistant response and render it with Rich.
-
-    Args:
-        console: Rich console for output.
-        model: The model identifier.
-        messages: The conversation history.
-        render: Whether to render as Markdown.
 
     Returns:
         The full assistant response text.
@@ -145,7 +116,7 @@ def _stream_response(
 
     full_response = ""
     renderable = Markdown(full_response) if render else full_response
-    with Live(renderable, console=console, refresh_per_second=15) as live:
+    with Live(renderable, console=console, refresh_per_second=30) as live:
         for token in token_stream:
             full_response += token
             live.update(Markdown(full_response) if render else full_response)
@@ -166,88 +137,90 @@ def _resolve_command(action: str | None, text: str) -> str | None:
     return None
 
 
-def _handle_command(command: str, state: SessionState) -> LoopSignal:
-    """Dispatch a single command and mutate *state* accordingly."""
+def _handle_command(
+    command: str, config: Config, messages: list[Message], console: Console
+) -> LoopSignal:
+    """Dispatch a single command and mutate *config* / *messages* accordingly."""
     match command:
         case "exit":
             return LoopSignal.BREAK
         case "new":
-            state.messages.clear()
-            state.console.print()
-            state.console.print(Rule("[bold]new conversation[/bold]"))
-            state.console.print()
+            messages.clear()
+            console.print()
+            console.print(Rule("[bold]new conversation[/bold]"))
+            console.print()
             return LoopSignal.CONTINUE
         case "model":
-            state.model = _switch_model(state.console, state.model)
-            save_default_model(state.model)
-            state.console.print(f"\n[dim]Model switched to:[/dim] {state.model}\n")
+            config.settings.model = _switch_model(console, config)
+            config.save()
+            console.print(f"\n[dim]Model switched to:[/dim] {config.settings.model}\n")
             return LoopSignal.CONTINUE
         case "render":
-            state.render = not state.render
-            save_render_setting(state.render)
-            status = "enabled" if state.render else "disabled"
-            state.console.print(f"\n[dim]Markdown rendering {status}.[/dim]\n")
+            config.settings.render_markdown = not config.settings.render_markdown
+            config.save()
+            status = "enabled" if config.settings.render_markdown else "disabled"
+            console.print(f"\n[dim]Markdown rendering {status}.[/dim]\n")
             return LoopSignal.CONTINUE
         case _:
             return LoopSignal.NOOP
 
 
-def _handle_error(exc: Exception, state: SessionState) -> None:
+def _handle_error(
+    exc: Exception, config: Config, messages: list[Message], console: Console
+) -> None:
     """Handle errors during response generation."""
     if isinstance(exc, (AuthenticationError, APIPermissionError)):
         provider_name = exc.provider.removesuffix("Provider").lower()
         provider_cls = load_provider(provider_name)
         key_name = provider_cls.api_key_name
 
-        state.console.print(
+        console.print(
             f"\n[bold red]Error:[/bold red] API key for [bold]{provider_name}[/bold] "
             "is missing or incorrect."
         )
-        state.console.print(f"[dim]Expected environment variable:[/dim] {key_name}\n")
+        console.print(f"[dim]Expected environment variable:[/dim] {key_name}\n")
 
         key_session = PromptSession()
         api_key = key_session.prompt(f"Enter your {key_name}: ").strip()
 
         if api_key:
-            save_api_key(key_name, api_key)
-            state.console.print("[green]Key saved to ~/.config/lmti/.env[/green]\n")
+            config.set_api_key(key_name, api_key)
+            console.print("[green]Key saved to ~/.config/lmti/config.yaml[/green]\n")
     else:
-        state.console.print(f"\n[bold red]Error:[/bold red] {exc}\n")
+        console.print(f"\n[bold red]Error:[/bold red] {exc}\n")
 
-    if state.messages:
-        state.messages.pop()
+    if messages:
+        messages.pop()
 
 
-def _send_message(text: str, state: SessionState) -> None:
+def _send_message(text: str, config: Config, messages: list[Message], console: Console) -> None:
     """Append a user message, stream the assistant reply, and handle errors."""
-    state.messages.append(UserMessage(content=text))
+    messages.append(UserMessage(content=text))
 
-    state.console.print()
-    state.console.print(Rule("[bold blue]You[/bold blue]"))
-    state.console.print(Markdown(text) if state.render else text)
-    state.console.print()
-    state.console.print(Rule("[bold green]Assistant[/bold green]"))
+    console.print()
+    console.print(Rule("[bold blue]You[/bold blue]"))
+    console.print(Markdown(text) if config.settings.render_markdown else text)
+    console.print()
+    console.print(Rule("[bold green]Assistant[/bold green]"))
 
     try:
         response_text = _stream_response(
-            state.console, state.model, state.messages, render=state.render
+            console, config.settings.model, messages, render=config.settings.render_markdown
         )
-        state.messages.append(AssistantMessage(content=response_text))
-        state.console.print()
+        messages.append(AssistantMessage(content=response_text))
+        console.print()
     except Exception as exc:
-        _handle_error(exc, state)
+        _handle_error(exc, config, messages, console)
 
 
-def run(model: str) -> None:
+def run(config: Config) -> None:
     """Run the interactive REPL.
 
     Args:
-        model: Initial model identifier (provider:model).
+        config: The application configuration (single source of truth).
     """
-    import os
-
-    render = os.environ.get("MARKDOWN_RENDER", "true").lower() == "true"
-    state = SessionState(model=model, render=render)
+    console = Console()
+    messages: list[Message] = []
 
     keybinding_action: dict[str, str | None] = {"action": None}
     completer = WordCompleter(COMMANDS, meta_dict=COMMAND_META, sentence=True)
@@ -255,10 +228,10 @@ def run(model: str) -> None:
     style = Style.from_dict({"prompt": "ansigreen"})
     session = PromptSession(key_bindings=kb, completer=completer, style=style)
 
-    state.console.print(Rule("[bold]lmti[/bold]"))
-    state.console.print(f"[dim]Model:[/dim] {model}")
-    state.console.print("[dim]Alt+Enter[/dim] for newlines  [dim]Forward slash[/dim] for commands")
-    state.console.print()
+    console.print(Rule("[bold]lmti[/bold]"))
+    console.print(f"[dim]Model:[/dim] {config.settings.model}")
+    console.print("[dim]Alt+Enter[/dim] for newlines  [dim]Forward slash[/dim] for commands")
+    console.print()
 
     while True:
         keybinding_action["action"] = None
@@ -272,7 +245,7 @@ def run(model: str) -> None:
         command = _resolve_command(keybinding_action["action"], text)
 
         if command:
-            signal = _handle_command(command, state)
+            signal = _handle_command(command, config, messages, console)
             if signal is LoopSignal.BREAK:
                 break
             if signal is LoopSignal.CONTINUE:
@@ -281,4 +254,4 @@ def run(model: str) -> None:
         if not text:
             continue
 
-        _send_message(text, state)
+        _send_message(text, config, messages, console)
