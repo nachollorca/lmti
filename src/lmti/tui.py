@@ -13,7 +13,9 @@ from prompt_toolkit.styles import Style
 from rich.console import Console
 from rich.live import Live
 from rich.markdown import Markdown
+from rich.panel import Panel
 from rich.rule import Rule
+from rich.text import Text
 
 from lmti.config import Config
 
@@ -147,19 +149,37 @@ def _handle_command(
         case "new":
             messages.clear()
             console.print()
-            console.print(Rule("[bold]new conversation[/bold]"))
+            console.print(Rule("[bold]new conversation[/bold]", characters="═", style="dim"))
             console.print()
             return LoopSignal.CONTINUE
         case "model":
             config.settings.model = _switch_model(console, config)
             config.save()
-            console.print(f"\n[dim]Model switched to:[/dim] {config.settings.model}\n")
+            console.print()
+            console.print(
+                Panel(
+                    f"Model switched to [bold]{config.settings.model}[/bold]",
+                    title="[dim bold]system[/dim bold]",
+                    border_style="dim",
+                    padding=(0, 1),
+                )
+            )
+            console.print()
             return LoopSignal.CONTINUE
         case "render":
             config.settings.render_markdown = not config.settings.render_markdown
             config.save()
             status = "enabled" if config.settings.render_markdown else "disabled"
-            console.print(f"\n[dim]Markdown rendering {status}.[/dim]\n")
+            console.print()
+            console.print(
+                Panel(
+                    f"Markdown rendering [bold]{status}[/bold]",
+                    title="[dim bold]system[/dim bold]",
+                    border_style="dim",
+                    padding=(0, 1),
+                )
+            )
+            console.print()
             return LoopSignal.CONTINUE
         case _:
             return LoopSignal.NOOP
@@ -174,20 +194,38 @@ def _handle_error(
         provider_cls = load_provider(provider_name)
         key_name = provider_cls.api_key_name
 
-        console.print(
-            f"\n[bold red]Error:[/bold red] API key for [bold]{provider_name}[/bold] "
-            "is missing or incorrect."
+        error_text = Text.from_markup(
+            f"API key for [bold]{provider_name}[/bold] is missing or incorrect.\n"
+            f"[dim]Expected environment variable:[/dim] {key_name}"
         )
-        console.print(f"[dim]Expected environment variable:[/dim] {key_name}\n")
+        console.print()
+        console.print(
+            Panel(
+                error_text, title="[bold red]error[/bold red]", border_style="red", padding=(0, 1)
+            )
+        )
+        console.print()
 
         key_session = PromptSession()
         api_key = key_session.prompt(f"Enter your {key_name}: ").strip()
 
         if api_key:
             config.set_api_key(key_name, api_key)
-            console.print("[green]Key saved to ~/.config/lmti/config.yaml[/green]\n")
+            console.print(
+                Panel(
+                    f"Key saved to [dim]~/.config/lmti/config.yaml[/dim]",
+                    title="[dim bold]system[/dim bold]",
+                    border_style="green",
+                    padding=(0, 1),
+                )
+            )
+            console.print()
     else:
-        console.print(f"\n[bold red]Error:[/bold red] {exc}\n")
+        console.print()
+        console.print(
+            Panel(str(exc), title="[bold red]error[/bold red]", border_style="red", padding=(0, 1))
+        )
+        console.print()
 
     if messages:
         messages.pop()
@@ -198,10 +236,10 @@ def _send_message(text: str, config: Config, messages: list[Message], console: C
     messages.append(UserMessage(content=text))
 
     console.print()
-    console.print(Rule("[bold blue]You[/bold blue]"))
+    console.print(Rule("[bold blue]You[/bold blue]", align="left", style="blue"))
     console.print(Markdown(text) if config.settings.render_markdown else text)
     console.print()
-    console.print(Rule("[bold green]Assistant[/bold green]"))
+    console.print(Rule("[bold green]Assistant[/bold green]", align="left", style="green"))
 
     try:
         response_text = _stream_response(
@@ -228,9 +266,11 @@ def run(config: Config) -> None:
     style = Style.from_dict({"prompt": "ansigreen"})
     session = PromptSession(key_bindings=kb, completer=completer, style=style)
 
-    console.print(Rule("[bold]lmti[/bold]"))
-    console.print(f"[dim]Model:[/dim] {config.settings.model}")
-    console.print("[dim]Alt+Enter[/dim] for newlines  [dim]Forward slash[/dim] for commands")
+    welcome_text = Text.from_markup(
+        f"[dim]Model:[/dim]  {config.settings.model}\n"
+        "[dim]Alt+Enter[/dim] for newlines  ·  [dim]/[/dim] for commands  ·  [dim]Ctrl+Q[/dim] to exit"
+    )
+    console.print(Panel(welcome_text, title="[bold]lmti[/bold]", border_style="dim"))
     console.print()
 
     while True:
