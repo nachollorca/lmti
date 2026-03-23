@@ -159,7 +159,7 @@ def _handle_command(
             console.print(
                 Panel(
                     f"Model switched to [bold]{config.settings.model}[/bold]",
-                    title="[dim bold]system[/dim bold]",
+                    title="[dim bold]Settings[/dim bold]",
                     border_style="dim",
                     padding=(0, 1),
                 )
@@ -174,7 +174,7 @@ def _handle_command(
             console.print(
                 Panel(
                     f"Markdown rendering [bold]{status}[/bold]",
-                    title="[dim bold]system[/dim bold]",
+                    title="[dim bold]Settings[/dim bold]",
                     border_style="dim",
                     padding=(0, 1),
                 )
@@ -213,8 +213,8 @@ def _handle_error(
             config.set_api_key(key_name, api_key)
             console.print(
                 Panel(
-                    f"Key saved to [dim]~/.config/lmti/config.yaml[/dim]",
-                    title="[dim bold]system[/dim bold]",
+                    "Key saved to [dim]~/.config/lmti/config.yaml[/dim]",
+                    title="[dim bold]Settings[/dim bold]",
                     border_style="green",
                     padding=(0, 1),
                 )
@@ -236,10 +236,10 @@ def _send_message(text: str, config: Config, messages: list[Message], console: C
     messages.append(UserMessage(content=text))
 
     console.print()
-    console.print(Rule("[bold blue]You[/bold blue]", align="left", style="blue"))
+    console.print(Rule("[bold green]You[/bold green]", align="left", style="green"))
     console.print(Markdown(text) if config.settings.render_markdown else text)
     console.print()
-    console.print(Rule("[bold green]Assistant[/bold green]", align="left", style="green"))
+    console.print(Rule("[bold blue]Assistant[/bold blue]", align="left", style="blue"))
 
     try:
         response_text = _stream_response(
