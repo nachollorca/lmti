@@ -7,7 +7,7 @@ from enum import Enum, auto
 
 from lmdk import complete
 from lmdk.datatypes import AssistantMessage, Message, UserMessage
-from lmdk.errors import AuthenticationError, PermissionError as lmdkPermissionError
+from lmdk.errors import APIPermissionError, AuthenticationError
 from lmdk.provider import load_provider
 from prompt_toolkit import PromptSession
 from prompt_toolkit.completion import WordCompleter
@@ -194,7 +194,7 @@ def _handle_command(command: str, state: SessionState) -> LoopSignal:
 
 def _handle_error(exc: Exception, state: SessionState) -> None:
     """Handle errors during response generation."""
-    if isinstance(exc, (AuthenticationError, lmdkPermissionError)):
+    if isinstance(exc, (AuthenticationError, APIPermissionError)):
         provider_name = exc.provider.removesuffix("Provider").lower()
         provider_cls = load_provider(provider_name)
         key_name = provider_cls.api_key_name
