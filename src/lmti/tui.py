@@ -289,7 +289,13 @@ def _handle_error(
     else:
         console.print()
         console.print(
-            Panel(str(exc), title="[bold red]error[/bold red]", border_style="red", padding=(0, 1))
+            Panel(
+                str(exc),
+                title="[bold red]error[/bold red]",
+                border_style="red",
+                padding=(0, 1),
+                expand=False,
+            )
         )
         console.print()
 
