@@ -89,7 +89,9 @@ def _switch_model(console: Console, config: Config) -> str:
     session = PromptSession()
 
     while True:
-        choice = session.prompt("Select model (number or identifier): ", completer=model_completer)
+        choice = session.prompt(
+            "Select a model index or provide an identifier: ", completer=model_completer
+        )
         choice = choice.strip()
 
         if not choice:
@@ -207,50 +209,83 @@ def _handle_command(
             return LoopSignal.NOOP
 
 
-def _handle_error(
-    exc: Exception, config: Config, messages: list[Message], console: Console
+def _handle_auth_error(
+    exc: AuthenticationError | APIPermissionError, config: Config, console: Console
 ) -> None:
-    """Handle errors during response generation."""
-    if isinstance(exc, (AuthenticationError, APIPermissionError)):
-        provider_name = exc.provider.removesuffix("Provider").lower()
-        provider_cls = load_provider(provider_name)
-        required_vars = provider_cls.required_env
-        if isinstance(required_vars, str):
-            required_vars = (required_vars,)
+    """Handle missing or incorrect provider configuration."""
+    provider_name = exc.provider.removesuffix("Provider").lower()
+    provider_cls = load_provider(provider_name)
+    required_vars = provider_cls.required_env
+    if isinstance(required_vars, str):
+        required_vars = (required_vars,)
 
-        error_text = Text.from_markup(
-            f"Configuration for [bold]{provider_name}[/bold] is missing or incorrect.\n"
-            f"[dim]Required environment variables:[/dim] {', '.join(required_vars)}"
-        )
-        console.print()
+    error_text = Text.from_markup(
+        f"Configuration for [bold]{provider_name}[/bold] is missing or incorrect.\n"
+        f"[dim]Required environment variables:[/dim] {', '.join(required_vars)}"
+    )
+    console.print()
+    console.print(Panel(error_text, border_style="red", padding=(0, 1), expand=False))
+    console.print()
+
+    key_session = PromptSession()
+    any_saved = False
+    for var_name in required_vars:
+        value = key_session.prompt(f"Enter {var_name}: ").strip()
+        if value:
+            config.set_api_key(var_name, value)
+            any_saved = True
+
+    if any_saved:
         console.print(
             Panel(
-                error_text,
-                border_style="red",
+                "Configuration saved to [dim]~/.config/lmti/config.yaml[/dim]",
+                border_style="green",
                 padding=(0, 1),
                 expand=False,
             )
         )
         console.print()
 
-        key_session = PromptSession()
-        any_saved = False
-        for var_name in required_vars:
-            value = key_session.prompt(f"Enter {var_name}: ").strip()
-            if value:
-                config.set_api_key(var_name, value)
-                any_saved = True
 
-        if any_saved:
-            console.print(
-                Panel(
-                    "Configuration saved to [dim]~/.config/lmti/config.yaml[/dim]",
-                    border_style="green",
-                    padding=(0, 1),
-                    expand=False,
-                )
-            )
-            console.print()
+def _handle_import_error(exc: ImportError, config: Config, console: Console) -> None:
+    """Handle missing provider dependencies."""
+    import re
+
+    match = re.search(r"lmdk\.providers\.(\w+)", str(exc))
+    provider = match.group(1).capitalize() if match else "Unknown"
+
+    console.print()
+    console.print(
+        Panel(
+            f"[bold]{provider}[/bold] provider is not supported or missing dependencies.",
+            border_style="red",
+            padding=(0, 1),
+            expand=False,
+        )
+    )
+
+    config.settings.model = _switch_model(console, config)
+    config.save()
+    console.print()
+    console.print(
+        Panel(
+            f"Model switched to [bold]{config.settings.model}[/bold]",
+            border_style="dim",
+            padding=(0, 1),
+            expand=False,
+        )
+    )
+    console.print()
+
+
+def _handle_error(
+    exc: Exception, config: Config, messages: list[Message], console: Console
+) -> None:
+    """Handle errors during response generation."""
+    if isinstance(exc, (AuthenticationError, APIPermissionError)):
+        _handle_auth_error(exc, config, console)
+    elif isinstance(exc, ImportError) and "lmdk.providers." in str(exc):
+        _handle_import_error(exc, config, console)
     else:
         console.print()
         console.print(
