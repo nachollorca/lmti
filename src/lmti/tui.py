@@ -83,27 +83,50 @@ def _switch_model(console: Console, config: Config) -> str:
     for i, m in enumerate(config.models, 1):
         marker = " [dim](current)[/dim]" if m == config.settings.model else ""
         console.print(f"  {i}. {m}{marker}")
-    console.print(f"  {len(config.models) + 1}. Enter a custom model")
     console.print()
 
     model_completer = WordCompleter(config.models)
     session = PromptSession()
-    choice = session.prompt("Select model (number or identifier): ", completer=model_completer)
-    choice = choice.strip()
 
+    while True:
+        choice = session.prompt("Select model (number or identifier): ", completer=model_completer)
+        choice = choice.strip()
+
+        if not choice:
+            return config.settings.model
+
+        selected = _parse_model_choice(choice, config.models)
+        if selected:
+            return selected
+
+        console.print(
+            "[red]Error:[/red] Invalid model format. Use 'provider:model_id' or a number."
+        )
+
+
+def _parse_model_choice(choice: str, available_models: list[str]) -> str | None:
+    """Parse a model choice string into a model identifier.
+
+    Args:
+        choice: The user's input string.
+        available_models: List of known model identifiers.
+
+    Returns:
+        The matched model identifier, or None if invalid.
+    """
     if choice.isdigit():
         idx = int(choice)
-        if 1 <= idx <= len(config.models):
-            return config.models[idx - 1]
-        if idx == len(config.models) + 1:
-            custom = session.prompt("Enter model identifier (provider:model): ")
-            return custom.strip()
+        if 1 <= idx <= len(available_models):
+            return available_models[idx - 1]
+        return None
 
     # Treat as a direct model identifier if it looks like one.
-    if choice:
-        return choice
+    if ":" in choice:
+        parts = choice.split(":")
+        if len(parts) == 2 and all(parts):
+            return choice
 
-    return config.settings.model
+    return None
 
 
 def _stream_response(
@@ -159,9 +182,9 @@ def _handle_command(
             console.print(
                 Panel(
                     f"Model switched to [bold]{config.settings.model}[/bold]",
-                    title="[dim bold]Settings[/dim bold]",
                     border_style="dim",
                     padding=(0, 1),
+                    expand=False,
                 )
             )
             console.print()
@@ -174,7 +197,6 @@ def _handle_command(
             console.print(
                 Panel(
                     f"Markdown rendering [bold]{status}[/bold]",
-                    title="[dim bold]Settings[/dim bold]",
                     border_style="dim",
                     padding=(0, 1),
                 )
@@ -192,31 +214,40 @@ def _handle_error(
     if isinstance(exc, (AuthenticationError, APIPermissionError)):
         provider_name = exc.provider.removesuffix("Provider").lower()
         provider_cls = load_provider(provider_name)
-        key_name = provider_cls.api_key_name
+        required_vars = provider_cls.required_env
+        if isinstance(required_vars, str):
+            required_vars = (required_vars,)
 
         error_text = Text.from_markup(
-            f"API key for [bold]{provider_name}[/bold] is missing or incorrect.\n"
-            f"[dim]Expected environment variable:[/dim] {key_name}"
+            f"Configuration for [bold]{provider_name}[/bold] is missing or incorrect.\n"
+            f"[dim]Required environment variables:[/dim] {', '.join(required_vars)}"
         )
         console.print()
         console.print(
             Panel(
-                error_text, title="[bold red]error[/bold red]", border_style="red", padding=(0, 1)
+                error_text,
+                border_style="red",
+                padding=(0, 1),
+                expand=False,
             )
         )
         console.print()
 
         key_session = PromptSession()
-        api_key = key_session.prompt(f"Enter your {key_name}: ").strip()
+        any_saved = False
+        for var_name in required_vars:
+            value = key_session.prompt(f"Enter {var_name}: ").strip()
+            if value:
+                config.set_api_key(var_name, value)
+                any_saved = True
 
-        if api_key:
-            config.set_api_key(key_name, api_key)
+        if any_saved:
             console.print(
                 Panel(
-                    "Key saved to [dim]~/.config/lmti/config.yaml[/dim]",
-                    title="[dim bold]Settings[/dim bold]",
+                    "Configuration saved to [dim]~/.config/lmti/config.yaml[/dim]",
                     border_style="green",
                     padding=(0, 1),
+                    expand=False,
                 )
             )
             console.print()
@@ -270,7 +301,7 @@ def run(config: Config) -> None:
         f"[dim]Model:[/dim]  {config.settings.model}\n"
         "[dim]Alt+Enter[/dim] for newlines  ·  [dim]/[/dim] for commands  ·  [dim]Ctrl+Q[/dim] to exit"
     )
-    console.print(Panel(welcome_text, title="[bold]lmti[/bold]", border_style="dim"))
+    console.print(Panel(welcome_text, border_style="dim", expand=False))
     console.print()
 
     while True:
