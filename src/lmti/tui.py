@@ -329,7 +329,7 @@ def run(config: Config) -> None:
     Args:
         config: The application configuration (single source of truth).
     """
-    console = Console()
+    console = Console(force_terminal=True)
     messages: list[Message] = []
 
     keybinding_action: dict[str, str | None] = {"action": None}
