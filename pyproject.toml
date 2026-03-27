@@ -16,8 +16,8 @@ dependencies = [
 package = true
 
 # use this to install local dependencies
-[tool.uv.sources]
-lmdk = { path = "../dk", editable = true }
+# [tool.uv.sources]
+# lmdk = { path = "../dk", editable = true }
 
 [dependency-groups]
 dev = [
