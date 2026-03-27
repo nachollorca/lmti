@@ -24,6 +24,7 @@ COMMAND_META = {
     "/new": "Start a new conversation (Ctrl+N)",
     "/model": "Switch the current model (Ctrl+O)",
     "/render": "Toggle Markdown rendering (Ctrl+R)",
+    "/system": "Set or clear the system instruction (Ctrl+S)",
 }
 
 COMMANDS = list(COMMAND_META.keys())
@@ -63,6 +64,11 @@ def _build_key_bindings(session_state: dict) -> KeyBindings:
     @kb.add("c-r")
     def _render(event):
         session_state["action"] = "render"
+        event.app.exit(result="")
+
+    @kb.add("c-s")
+    def _system(event):
+        session_state["action"] = "system"
         event.app.exit(result="")
 
     @kb.add("escape", "enter")
@@ -106,6 +112,28 @@ def _switch_model(console: Console, config: Config) -> str:
         )
 
 
+def _set_system_instruction(console: Console, config: Config) -> str | None:
+    """Prompt the user to set a new system instruction.
+
+    Returns:
+        The new system instruction, or None if cleared.
+    """
+    console.print()
+    console.print("[bold]System Instruction:[/bold]")
+    if config.settings.system_instruction:
+        console.print(
+            Panel(config.settings.system_instruction, border_style="dim", title="current")
+        )
+    else:
+        console.print("  [dim]No system instruction set.[/dim]")
+    console.print()
+
+    session = PromptSession()
+    new_instruction = session.prompt("Enter new system instruction (empty to clear): ").strip()
+
+    return new_instruction or None
+
+
 def _parse_model_choice(choice: str, available_models: list[str]) -> str | None:
     """Parse a model choice string into a model identifier.
 
@@ -132,14 +160,20 @@ def _parse_model_choice(choice: str, available_models: list[str]) -> str | None:
 
 
 def _stream_response(
-    console: Console, model: str, messages: list[Message], render: bool = True
+    console: Console,
+    model: str,
+    messages: list[Message],
+    render: bool = True,
+    system_instruction: str | None = None,
 ) -> str:
     """Stream an assistant response and render it with Rich.
 
     Returns:
         The full assistant response text.
     """
-    token_stream = complete(model=model, prompt=messages, stream=True)
+    token_stream = complete(
+        model=model, prompt=messages, stream=True, system_instruction=system_instruction
+    )
 
     full_response = ""
     renderable = Markdown(full_response) if render else full_response
@@ -203,6 +237,19 @@ def _handle_command(
                     padding=(0, 1),
                 )
             )
+            console.print()
+            return LoopSignal.CONTINUE
+        case "system":
+            config.settings.system_instruction = _set_system_instruction(console, config)
+            config.save()
+
+            status_msg = (
+                f"System instruction set to: [italic]{config.settings.system_instruction}[/italic]"
+                if config.settings.system_instruction
+                else "System instruction cleared."
+            )
+            console.print()
+            console.print(Panel(status_msg, border_style="dim", padding=(0, 1), expand=False))
             console.print()
             return LoopSignal.CONTINUE
         case _:
@@ -315,7 +362,11 @@ def _send_message(text: str, config: Config, messages: list[Message], console: C
 
     try:
         response_text = _stream_response(
-            console, config.settings.model, messages, render=config.settings.render_markdown
+            console,
+            config.settings.model,
+            messages,
+            render=config.settings.render_markdown,
+            system_instruction=config.settings.system_instruction,
         )
         messages.append(AssistantMessage(content=response_text))
         console.print()
@@ -340,7 +391,7 @@ def run(config: Config) -> None:
 
     welcome_text = Text.from_markup(
         f"[dim]Model:[/dim]  {config.settings.model}\n"
-        "[dim]Alt+Enter[/dim] for newlines  ·  [dim]/[/dim] for commands  ·  [dim]Ctrl+Q[/dim] to exit"
+        "[dim]Alt+Enter[/dim] for newlines  ·  [dim]/ (forward slash)[/dim] for commands"
     )
     console.print(Panel(welcome_text, border_style="dim", expand=False))
     console.print()

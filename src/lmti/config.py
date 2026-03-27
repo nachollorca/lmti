@@ -22,6 +22,9 @@ class Settings(BaseModel):
 
     render_markdown: bool = True
     model: str = "mistral:mistral-small-2603"
+    system_instruction: str | None = Field(default=None, alias="system-instruction")
+
+    model_config = {"populate_by_name": True}
 
 
 class Config(BaseModel):
