@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field
 
 CONFIG_PATH = Path.home() / ".config" / "lmti" / "config.yaml"
 
-DEFAULT_MODELS = [
+AVAILABLE_MODELS = [
     "mistral:mistral-small-2603",
     "mistral:mistral-large-2512",
     "mistral:devstral-2512",
@@ -36,7 +36,7 @@ class Config(BaseModel):
 
     credentials: dict[str, str] = Field(default_factory=dict)
     settings: Settings = Field(default_factory=Settings)
-    models: list[str] = Field(default_factory=lambda: list(DEFAULT_MODELS))
+    models: list[str] = Field(default_factory=lambda: list(AVAILABLE_MODELS))
 
     @classmethod
     def load(cls, path: Path = CONFIG_PATH) -> "Config":
@@ -53,6 +53,11 @@ class Config(BaseModel):
         try:
             data = yaml.safe_load(path.read_text()) or {}
             config = cls(**data)
+
+            # Sync available models if they differ from the constant
+            if config.models != AVAILABLE_MODELS:
+                config.models = list(AVAILABLE_MODELS)
+                config.save(path)
         except Exception:
             config = cls()
 
