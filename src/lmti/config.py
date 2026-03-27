@@ -13,7 +13,11 @@ CONFIG_PATH = Path.home() / ".config" / "lmti" / "config.yaml"
 
 DEFAULT_MODELS = [
     "mistral:mistral-small-2603",
+    "mistral:mistral-large-2512",
+    "mistral:devstral-2512",
     "vertex:gemini-2.5-flash",
+    "vertex:gemini-3-flash-preview",
+    "vertex:gemini-3.1-pro-preview",
 ]
 
 
