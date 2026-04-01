@@ -15,7 +15,7 @@ FAQ:
 ## Install
 `uv tool install lmti`
 
-## Usage
+## Gettint started
 ```bash
 # Start with the default model
 lmti
@@ -24,10 +24,13 @@ lmti
 lmti -m vertex:gemini-2.5-flash
 ```
 
-<details>
-<summary>Configuration</summary>
+## Commands
+[List help here]
 
-Config is stored at `~/.config/lmti/config.yaml`. It handles your credentials and default settings:
+## Config
+Config is stored at `~/.config/lmti/config.yaml`.
+It handles your credentials and default settings.
+Many of these can also be modified through commands in the TUI:
 
 ```yaml
 credentials:
@@ -39,7 +42,6 @@ models:
 - mistral:mistral-small-2603
 - vertex:gemini-2.5-flash
 ```
-</details>
 
 ## Development
 
