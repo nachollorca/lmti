@@ -2,6 +2,24 @@
 
 <!-- version list -->
 
+## v1.2.0 (2026-04-02)
+
+### Chores
+
+- Add anthropic models now that they are supported in lmdk
+  ([`795e2f9`](https://github.com/nachollorca/lmti/commit/795e2f9c67ccae6a8fa012ecfefda5c633a4d8df))
+
+### Documentation
+
+- Remove expander in readme, add placeholder for commands help
+  ([`f0b1b9b`](https://github.com/nachollorca/lmti/commit/f0b1b9b48b121a0cb4cf53c12bbfa84825d35074))
+
+### Features
+
+- Add /copy command
+  ([`133b79a`](https://github.com/nachollorca/lmti/commit/133b79a917f585bbeb94385e15b88c27377d9ad2))
+
+
 ## v1.1.0 (2026-03-27)
 
 ### Bug Fixes
