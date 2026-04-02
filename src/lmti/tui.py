@@ -1,5 +1,8 @@
 """Interactive TUI for chatting with language models."""
 
+import json
+import shutil
+import subprocess
 from enum import Enum, auto
 
 from lmdk import complete
@@ -25,7 +28,10 @@ COMMAND_META = {
     "/model": "Switch the current model (Ctrl+O)",
     "/render": "Toggle Markdown rendering (Ctrl+R)",
     "/system": "Set or clear the system instruction (Ctrl+S)",
+    "/copy": "Copy a message or whole conversation to clipboard",
 }
+
+_MESSAGE_PREVIEW_LENGTH = 80
 
 COMMANDS = list(COMMAND_META.keys())
 
@@ -132,6 +138,127 @@ def _set_system_instruction(console: Console, config: Config) -> str | None:
     new_instruction = session.prompt("Enter new system instruction (empty to clear): ").strip()
 
     return new_instruction or None
+
+
+def _copy_to_clipboard(text: str) -> bool:
+    """Copy text to the system clipboard.
+
+    Tries platform-specific clipboard commands in order of preference.
+
+    Returns:
+        True if the text was successfully copied, False otherwise.
+    """
+    candidates = ["xclip", "xsel", "wl-copy", "pbcopy"]
+    for cmd in candidates:
+        path = shutil.which(cmd)
+        if path is None:
+            continue
+        args: list[str] = []
+        match cmd:
+            case "xclip":
+                args = [path, "-selection", "clipboard"]
+            case "xsel":
+                args = [path, "--clipboard", "--input"]
+            case _:
+                args = [path]
+        try:
+            subprocess.run(args, input=text.encode(), check=True)  # noqa: S603
+            return True
+        except (subprocess.CalledProcessError, OSError):
+            continue
+    return False
+
+
+def _message_role(msg: Message) -> str:
+    """Return ``"user"`` or ``"assistant"`` for a message."""
+    return "user" if isinstance(msg, UserMessage) else "assistant"
+
+
+def _format_message_preview(index: int, msg: Message) -> str:
+    """Return a one-line preview string for a message."""
+    role = _message_role(msg)
+    preview = msg.content[:_MESSAGE_PREVIEW_LENGTH].replace("\n", " ")
+    ellipsis = "…" if len(msg.content) > _MESSAGE_PREVIEW_LENGTH else ""
+    return f"  {index}. [{role}] {preview}{ellipsis}"
+
+
+def _prompt_copy_choice(session: PromptSession, upper_bound: int) -> int | None:
+    """Ask the user for a number in ``[1, upper_bound]``.
+
+    Returns:
+        The selected index, or ``None`` if cancelled.
+    """
+    while True:
+        choice = session.prompt("Select an item number (empty to cancel): ").strip()
+        if not choice:
+            return None
+        if choice.isdigit() and 1 <= int(choice) <= upper_bound:
+            return int(choice)
+
+
+def _build_copy_payload(messages: list[Message], idx: int) -> tuple[str, str]:
+    """Build the clipboard text and a human-readable label for a copy choice.
+
+    Args:
+        messages: The conversation history.
+        idx: 1-based index; ``len(messages) + 1`` means the whole conversation.
+
+    Returns:
+        A ``(payload, label)`` tuple.
+    """
+    if idx == len(messages) + 1:
+        lines = [json.dumps({"role": _message_role(m), "content": m.content}) for m in messages]
+        return "\n".join(lines), "conversation (JSONL)"
+
+    msg = messages[idx - 1]
+    return msg.content, f"{_message_role(msg)} message #{idx}"
+
+
+def _copy_content(console: Console, messages: list[Message]) -> None:
+    """Prompt the user to pick a message or the whole conversation to copy."""
+    if not messages:
+        console.print()
+        console.print(
+            Panel("No messages to copy.", border_style="dim", padding=(0, 1), expand=False)
+        )
+        console.print()
+        return
+
+    console.print()
+    console.print("[bold]Copy to clipboard:[/bold]")
+    for i, msg in enumerate(messages, 1):
+        console.print(_format_message_preview(i, msg))
+    console.print(f"  {len(messages) + 1}. [dim]Entire conversation (JSONL)[/dim]")
+    console.print()
+
+    idx = _prompt_copy_choice(PromptSession(), upper_bound=len(messages) + 1)
+    if idx is None:
+        return
+
+    payload, label = _build_copy_payload(messages, idx)
+
+    if _copy_to_clipboard(payload):
+        console.print()
+        console.print(
+            Panel(
+                f"Copied {label} to clipboard.",
+                border_style="dim",
+                padding=(0, 1),
+                expand=False,
+            )
+        )
+        console.print()
+    else:
+        console.print()
+        console.print(
+            Panel(
+                "No clipboard tool found. Install xclip, xsel, or wl-copy.",
+                border_style="red",
+                padding=(0, 1),
+                expand=False,
+            )
+        )
+        console.print()
 
 
 def _parse_model_choice(choice: str, available_models: list[str]) -> str | None:
@@ -251,6 +378,9 @@ def _handle_command(
             console.print()
             console.print(Panel(status_msg, border_style="dim", padding=(0, 1), expand=False))
             console.print()
+            return LoopSignal.CONTINUE
+        case "copy":
+            _copy_content(console, messages)
             return LoopSignal.CONTINUE
         case _:
             return LoopSignal.NOOP
