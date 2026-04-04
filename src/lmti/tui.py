@@ -25,10 +25,10 @@ from lmti.config import Config
 COMMAND_META = {
     "/exit": "Exit the application (Ctrl+Q)",
     "/new": "Start a new conversation (Ctrl+N)",
-    "/model": "Switch the current model (Ctrl+O)",
+    "/model": "Switch the current model (Ctrl+M)",
     "/render": "Toggle Markdown rendering (Ctrl+R)",
-    "/system": "Set or clear the system instruction (Ctrl+S)",
-    "/copy": "Copy a message or whole conversation to clipboard",
+    "/system": "Set or clear the system instruction (Ctrl+I)",
+    "/copy": "Copy a message or whole conversation to clipboard (Ctrl+C)",
 }
 
 _MESSAGE_PREVIEW_LENGTH = 80
@@ -62,7 +62,7 @@ def _build_key_bindings(session_state: dict) -> KeyBindings:
         session_state["action"] = "new"
         event.app.exit(result="")
 
-    @kb.add("c-o")
+    @kb.add("c-m")
     def _model(event):
         session_state["action"] = "model"
         event.app.exit(result="")
@@ -72,9 +72,14 @@ def _build_key_bindings(session_state: dict) -> KeyBindings:
         session_state["action"] = "render"
         event.app.exit(result="")
 
-    @kb.add("c-s")
+    @kb.add("c-i")
     def _system(event):
         session_state["action"] = "system"
+        event.app.exit(result="")
+
+    @kb.add("c-c")
+    def _copy(event):
+        session_state["action"] = "copy"
         event.app.exit(result="")
 
     @kb.add("escape", "enter")

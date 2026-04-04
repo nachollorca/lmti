@@ -31,7 +31,7 @@ class Settings(BaseModel):
     model: str = "mistral:mistral-small-2603"
     system_instruction: str | None = Field(default=None, alias="system-instruction")
 
-    model_config = {"populate_by_name": True}
+    model_config = {"populate_by_name": True}  # so we can read kebab case and snake case in yaml
 
 
 class Config(BaseModel):
