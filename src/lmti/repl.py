@@ -1,5 +1,8 @@
 """Main REPL loop for lmti."""
 
+from dataclasses import dataclass, field
+from pathlib import Path
+
 from lmdk.datatypes import AssistantMessage, Message, UserMessage
 from prompt_toolkit import PromptSession
 from prompt_toolkit.styles import Style
@@ -16,6 +19,15 @@ from lmti.commands import (
 )
 from lmti.config import Config
 from lmti.errors import handle_error
+from lmti.history import save_conversation
+
+
+@dataclass
+class ReplState:
+    """Mutable state for the REPL loop."""
+
+    messages: list[Message] = field(default_factory=list)
+    conversation_path: Path | None = field(default=None)
 
 
 def run(config: Config) -> None:
@@ -34,7 +46,7 @@ def run(config: Config) -> None:
 
 def _repl(config: Config, console: Console) -> None:
     """Inner REPL loop, separated so we can catch KeyboardInterrupt cleanly."""
-    messages: list[Message] = []
+    state = ReplState()
 
     # KeyBindingState is a side-channel between key-binding handlers and this
     # loop — see its docstring for details on why this is necessary.
@@ -42,11 +54,7 @@ def _repl(config: Config, console: Console) -> None:
 
     kb = build_key_bindings(state=kb_state)
     completer = build_completer()
-    style = Style.from_dict(
-        {
-            "prompt": "ansigreen bold",
-        }
-    )
+    style = Style.from_dict({"prompt": "ansigreen bold"})
     session = PromptSession(key_bindings=kb, completer=completer, style=style)
 
     ui.print_welcome(console, config)
@@ -64,7 +72,7 @@ def _repl(config: Config, console: Console) -> None:
 
         command = resolve_command(keybinding_action=kb_state.action, text=text)
         if command:
-            signal = dispatch(command=command, config=config, messages=messages, console=console)
+            signal = dispatch(command=command, config=config, state=state, console=console)
             if signal is LoopSignal.BREAK:
                 break
             if signal is LoopSignal.CONTINUE:
@@ -75,19 +83,20 @@ def _repl(config: Config, console: Console) -> None:
             continue
 
         # Send message
-        messages.append(UserMessage(text))
+        state.messages.append(UserMessage(text))
         ui.print_header(console, "assistant")
 
         try:
             response = ui.stream_response(
                 console=console,
                 model=config.settings.model,
-                messages=messages,
+                messages=state.messages,
                 render=config.settings.render_markdown,
                 system_instruction=config.settings.system_instruction,
             )
-            messages.append(AssistantMessage(response))
+            state.messages.append(AssistantMessage(response))
+            state.conversation_path = save_conversation(state.messages, state.conversation_path)
             console.print()
         except Exception as exc:
-            messages.pop()  # remove the failed user message
+            state.messages.pop()  # remove the failed user message
             handle_error(exc, config, console)

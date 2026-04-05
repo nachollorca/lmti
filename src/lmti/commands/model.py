@@ -1,7 +1,6 @@
 """/model command — switch the active model."""
 
 from prompt_toolkit import PromptSession
-from prompt_toolkit.completion import WordCompleter
 from rich.console import Console
 
 from lmti import ui
