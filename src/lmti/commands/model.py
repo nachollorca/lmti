@@ -1,7 +1,5 @@
 """/model command — switch the active model."""
 
-from __future__ import annotations
-
 from prompt_toolkit import PromptSession
 from prompt_toolkit.completion import WordCompleter
 from rich.console import Console

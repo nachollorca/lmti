@@ -14,13 +14,17 @@ from lmti.config import Config
 
 @dataclass(frozen=True, slots=True)
 class Command:
-    """Definition of a single REPL command."""
+    """Definition of a single REPL command.
 
-    # TODO: move the comments for the attributes to the docstring
+    Attributes:
+        description: Human-readable summary shown in help text.
+        binding: prompt-toolkit key format, e.g. ``"c-q"``.
+        handler: Dotted module path, or ``None`` for inline commands.
+    """
 
     description: str
-    binding: str  # prompt-toolkit key format, e.g. "c-q"
-    handler: str | None  # dotted module path or None for inline commands
+    binding: str
+    handler: str | None
 
 
 COMMANDS: dict[str, Command] = {
@@ -116,7 +120,7 @@ def dispatch(command: str, config: Config, messages: list[Message], console: Con
 
         case "new":
             messages.clear()
-            ui.print_rule(console, "[bold]new conversation[/bold]")
+            ui.print_panel(console, "[bold]new conversation[/bold]")
             return LoopSignal.CONTINUE
 
         case "model":

@@ -3,8 +3,6 @@
 All display logic lives here — no business logic.
 """
 
-from typing import Literal
-
 from lmdk import complete
 from lmdk.datatypes import Message
 from prompt_toolkit import PromptSession
@@ -18,9 +16,6 @@ from rich.text import Text
 from lmti.config import Config
 
 
-# TODO: use print_panel for new chat too
-# There is no need to have a different kind of separator for new chats
-# Lets use these panels for all system information that does not modify the message list in any way
 def print_panel(
     console: Console, content: str | Text, *, border_style: str = "dim", **panel_kwargs
 ) -> None:
@@ -32,32 +27,17 @@ def print_panel(
     console.print()
 
 
-# TODO: this can be removed
-def print_rule(
-    console: Console,
-    label: str,
-    *,
-    align: Literal["left", "center", "right"] = "center",
-    style: str = "dim",
-    characters: str = "═",
-) -> None:
-    """Print a Rich Rule wrapped in blank lines."""
-    console.print()
-    console.print(Rule(label, align=align, style=style, characters=characters))
-    console.print()
+ROLE_STYLES: dict[str, tuple[str, str]] = {
+    "user": ("green", "You"),
+    "assistant": ("blue", "Assistant"),
+}
 
 
-# TODO: we can have a print_rule function that takes "role" instead of having two functions
-def print_user_header(console: Console) -> None:
-    """Print the 'You' header rule."""
+def print_header(console: Console, role: str) -> None:
+    """Print a header rule for the given *role* (``'user'`` or ``'assistant'``)."""
+    color, label = ROLE_STYLES[role]
     console.print()
-    console.print(Rule("[bold green]You[/bold green]", align="left", style="green"))
-
-
-def print_assistant_header(console: Console) -> None:
-    """Print the 'Assistant' header rule."""
-    console.print()
-    console.print(Rule("[bold blue]Assistant[/bold blue]", align="left", style="blue"))
+    console.print(Rule(f"[bold {color}]{label}[/bold {color}]", align="left", style=color))
 
 
 def prompt_selection(
@@ -138,10 +118,12 @@ def stream_response(
 
 def print_welcome(console: Console, config: Config) -> None:
     """Print the welcome banner."""
-    # TODO: show a string version of commands.COMMANDS with dim and stuff for help
+    from lmti.commands import COMMANDS
+
+    cmd_list = "  ".join(f"[dim]/{name}[/dim]" for name in COMMANDS)
     welcome_text = Text.from_markup(
         f"[dim]Model:[/dim]  {config.settings.model}\n"
-        "[dim]Alt+Enter[/dim] for newlines  ·  [dim]/ (forward slash)[/dim] for commands"
+        f"[dim]Alt+Enter[/dim] for newlines  ·  Commands: {cmd_list}"
     )
     console.print(Panel(welcome_text, border_style="dim", expand=False))
     console.print()

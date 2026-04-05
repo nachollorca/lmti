@@ -33,7 +33,11 @@ def run(config: Config) -> None:
 
     kb = build_key_bindings(state=kb_state)
     completer = build_completer()
-    style = Style.from_dict({"prompt": "ansigreen"})  # TODO: see what other styles are there
+    style = Style.from_dict(
+        {
+            "prompt": "ansigreen bold",
+        }
+    )
     session = PromptSession(key_bindings=kb, completer=completer, style=style)
 
     ui.print_welcome(console, config)
@@ -42,7 +46,7 @@ def run(config: Config) -> None:
         kb_state.action = None
 
         try:
-            ui.print_user_header(console)
+            ui.print_header(console, "user")
             user_input = session.prompt([("class:prompt", "❯ ")])
         except (EOFError, KeyboardInterrupt):
             break
@@ -63,7 +67,7 @@ def run(config: Config) -> None:
 
         # Send message
         messages.append(UserMessage(text))
-        ui.print_assistant_header(console)
+        ui.print_header(console, "assistant")
 
         try:
             response = ui.stream_response(
