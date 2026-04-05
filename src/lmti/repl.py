@@ -25,6 +25,15 @@ def run(config: Config) -> None:
         config: The application configuration (single source of truth).
     """
     console = Console(force_terminal=True)  # Why force_terminal?
+
+    try:
+        _repl(config, console)
+    except KeyboardInterrupt:
+        ui.print_panel(console, "[bold]Bye![/bold]")
+
+
+def _repl(config: Config, console: Console) -> None:
+    """Inner REPL loop, separated so we can catch KeyboardInterrupt cleanly."""
     messages: list[Message] = []
 
     # KeyBindingState is a side-channel between key-binding handlers and this
@@ -48,7 +57,7 @@ def run(config: Config) -> None:
         try:
             ui.print_header(console, "user")
             user_input = session.prompt([("class:prompt", "❯ ")])
-        except (EOFError, KeyboardInterrupt):
+        except EOFError:
             break
 
         text = user_input.strip()

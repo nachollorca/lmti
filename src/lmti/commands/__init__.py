@@ -28,12 +28,12 @@ class Command:
 
 
 COMMANDS: dict[str, Command] = {
-    "exit": Command("Exit the application", "c-q", None),
-    "new": Command("Start a new conversation", "c-n", None),
-    "model": Command("Switch the current model", "c-l", "commands.model"),
-    "render": Command("Toggle Markdown rendering", "c-r", None),
-    "system": Command("Set or clear the system instruction", "c-s", None),
-    "copy": Command("Copy a message or conversation", "c-c", "commands.copy"),
+    "exit": Command("Exit the application", "escape q", None),
+    "new": Command("Start a new conversation", "escape n", None),
+    "model": Command("Switch the current model", "escape m", "commands.model"),
+    "render": Command("Toggle Markdown rendering", "escape r", None),
+    "system": Command("Set or clear the system instruction", "escape s", None),
+    "copy": Command("Copy a message or conversation", "escape c", "commands.copy"),
 }
 
 
@@ -75,7 +75,7 @@ def build_key_bindings(state: KeyBindingState) -> KeyBindings:
 
             return _handler
 
-        kb.add(cmd_def.binding)(_make_handler(name))
+        kb.add(*cmd_def.binding.split())(_make_handler(name))
 
     # Consider the special case of new lines
     @kb.add("escape", "enter")
@@ -85,10 +85,17 @@ def build_key_bindings(state: KeyBindingState) -> KeyBindings:
     return kb
 
 
+def _format_binding(binding: str) -> str:
+    """Convert an escape-sequence binding like ``'escape x'`` to ``'Alt+X'``."""
+    return f"Alt+{binding.split()[1].upper()}"
+
+
 def build_completer() -> WordCompleter:
     """Derive a ``WordCompleter`` from the COMMANDS registry."""
     words = ["/" + k for k in COMMANDS]
-    meta = {"/" + k: v.description for k, v in COMMANDS.items()}
+    meta = {
+        "/" + k: f"{v.description}  ({_format_binding(v.binding)})" for k, v in COMMANDS.items()
+    }
     return WordCompleter(words, meta_dict=meta, sentence=True)
 
 
