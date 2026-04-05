@@ -1,6 +1,6 @@
 """Command registry, dispatch, and key-binding builder."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum, auto
 
 from lmdk.datatypes import Message
@@ -26,7 +26,7 @@ class Command:
 COMMANDS: dict[str, Command] = {
     "exit": Command("Exit the application", "c-q", None),
     "new": Command("Start a new conversation", "c-n", None),
-    "model": Command("Switch the current model", "c-m", "commands.model"),
+    "model": Command("Switch the current model", "c-l", "commands.model"),
     "render": Command("Toggle Markdown rendering", "c-r", None),
     "system": Command("Set or clear the system instruction", "c-i", None),
     "copy": Command("Copy a message or conversation", "c-c", "commands.copy"),
@@ -41,12 +41,24 @@ class LoopSignal(Enum):
     NOOP = auto()
 
 
-# ? This needs the session state to store the keybindings "globally"?
-def build_key_bindings(session_state: dict) -> KeyBindings:
+@dataclass
+class KeyBindingState:
+    """Mutable state shared between key-binding handlers and the REPL loop.
+
+    prompt-toolkit key handlers cannot return values — they can only call
+    ``event.app.exit()`` to break out of the prompt.  This object acts as a
+    side-channel: a handler writes the command name into :attr:`action`, and
+    the REPL reads it after ``session.prompt()`` returns.
+    """
+
+    action: str | None = field(default=None)
+
+
+def build_key_bindings(state: KeyBindingState) -> KeyBindings:
     """Generate key bindings from the COMMANDS registry.
 
     Args:
-        session_state: Mutable dict; ``session_state["action"]`` is set on key press.
+        state: Shared mutable state; ``state.action`` is set on key press.
     """
     kb = KeyBindings()
 
@@ -54,7 +66,7 @@ def build_key_bindings(session_state: dict) -> KeyBindings:
         # Capture *name* in a default argument so closures don't share the loop variable.
         def _make_handler(cmd_name: str):
             def _handler(event):
-                session_state["action"] = cmd_name
+                state.action = cmd_name
                 event.app.exit(result="")
 
             return _handler
@@ -76,16 +88,19 @@ def build_completer() -> WordCompleter:
     return WordCompleter(words, meta_dict=meta, sentence=True)
 
 
-# ? Is `action` for the keybinds? If so, I find the symbol name ambigous,
-# we should either change the name or include it properly in the docstring
-def resolve_command(action: str | None, text: str) -> str | None:
-    """Normalise keybinding actions and ``/slash`` input into a canonical command name.
+def resolve_command(keybinding_action: str | None, text: str) -> str | None:
+    """Normalise a keybinding action or ``/slash`` input into a canonical command name.
+
+    Args:
+        keybinding_action: Command name set by a key binding handler (e.g. ``"model"``),
+            or ``None`` when the user submitted text normally.
+        text: The raw text from the prompt input.
 
     Returns:
         A command name, or ``None`` for regular text.
     """
-    if action:
-        return action
+    if keybinding_action:
+        return keybinding_action
     if text.startswith("/"):
         name = text.lstrip("/")
         if name in COMMANDS:

@@ -60,7 +60,6 @@ def print_assistant_header(console: Console) -> None:
     console.print(Rule("[bold blue]Assistant[/bold blue]", align="left", style="blue"))
 
 
-# ? How does this handle wrong inputs (empty or out of index or not digit)?
 def prompt_selection(
     console: Console,
     title: str,
@@ -86,6 +85,7 @@ def prompt_selection(
             return None
         if choice.isdigit() and 1 <= int(choice) <= len(items):
             return int(choice)
+        console.print(f"[red]Invalid choice.[/red] Enter a number between 1 and {len(items)}.")
 
 
 def prompt_system_instruction(console: Console, config: Config) -> str | None:

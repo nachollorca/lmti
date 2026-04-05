@@ -4,8 +4,7 @@ import json
 import shutil
 import subprocess
 
-from lmdk.datatypes import Message, UserMessage
-from prompt_toolkit import PromptSession
+from lmdk.datatypes import Message
 from rich.console import Console
 
 from lmti import ui
@@ -40,19 +39,11 @@ def _copy_to_clipboard(text: str) -> bool:
     return False
 
 
-# ? Do we need this? UserMessage inherits from Message
-# we should have UserMessage().role equaling to "user", no?
-def _message_role(msg: Message) -> str:
-    """Return ``"user"`` or ``"assistant"`` for a message."""
-    return "user" if isinstance(msg, UserMessage) else "assistant"
-
-
-def _format_message_preview(index: int, msg: Message) -> str:
+def _format_message_preview(msg: Message) -> str:
     """Return a one-line preview string for a message."""
-    role = _message_role(msg)
     preview = msg.content[:_MESSAGE_PREVIEW_LENGTH].replace("\n", " ")
     ellipsis = "…" if len(msg.content) > _MESSAGE_PREVIEW_LENGTH else ""
-    return f"  {index}. [{role}] {preview}{ellipsis}"
+    return f"[{msg.role}] {preview}{ellipsis}"
 
 
 def _build_copy_payload(messages: list[Message], idx: int) -> tuple[str, str]:
@@ -66,11 +57,11 @@ def _build_copy_payload(messages: list[Message], idx: int) -> tuple[str, str]:
         A ``(payload, label)`` tuple.
     """
     if idx == len(messages) + 1:
-        lines = [json.dumps({"role": _message_role(m), "content": m.content}) for m in messages]
+        lines = [json.dumps({"role": m.role, "content": m.content}) for m in messages]
         return "\n".join(lines), "conversation (JSONL)"
 
     msg = messages[idx - 1]
-    return msg.content, f"{_message_role(msg)} message #{idx}"
+    return msg.content, f"{msg.role} message #{idx}"
 
 
 def handle_copy(console: Console, messages: list[Message]) -> None:
@@ -79,24 +70,12 @@ def handle_copy(console: Console, messages: list[Message]) -> None:
         ui.print_panel(console, "No messages to copy.")
         return
 
-    console.print()
-    console.print("[bold]Copy to clipboard:[/bold]")
-    # ? Shouldn't we use ui.prompt_selection() here?
-    for i, msg in enumerate(messages, 1):
-        console.print(_format_message_preview(i, msg))
-    console.print(f"  {len(messages) + 1}. [dim]Entire conversation (JSONL)[/dim]")
-    console.print()
+    items = [_format_message_preview(msg) for msg in messages]
+    items.append(f"[dim]Entire conversation (JSONL)[/dim]")
 
-    session = PromptSession()
-    upper_bound = len(messages) + 1
-
-    while True:
-        choice = session.prompt("Select an item number (empty to cancel): ").strip()
-        if not choice:
-            return
-        if choice.isdigit() and 1 <= int(choice) <= upper_bound:
-            idx = int(choice)
-            break
+    idx = ui.prompt_selection(console, "Copy to clipboard:", items)
+    if idx is None:
+        return
 
     payload, label = _build_copy_payload(messages, idx)
 
