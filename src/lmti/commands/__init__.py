@@ -3,7 +3,6 @@
 from dataclasses import dataclass, field
 from enum import Enum, auto
 
-from lmdk.datatypes import Message
 from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.key_binding import KeyBindings
 from rich.console import Console
@@ -34,6 +33,7 @@ COMMANDS: dict[str, Command] = {
     "render": Command("Toggle Markdown rendering", "escape r", None),
     "system": Command("Set or clear the system instruction", "escape s", None),
     "copy": Command("Copy a message or conversation", "escape c", "commands.copy"),
+    "history": Command("Resume a previous conversation", "escape h", "commands.history"),
 }
 
 
@@ -119,14 +119,15 @@ def resolve_command(keybinding_action: str | None, text: str) -> str | None:
     return None
 
 
-def dispatch(command: str, config: Config, messages: list[Message], console: Console) -> LoopSignal:
+def dispatch(command: str, config: Config, state, console: Console) -> LoopSignal:
     """Execute *command* and return a loop signal."""
     match command:
         case "exit":
             return LoopSignal.BREAK
 
         case "new":
-            messages.clear()
+            state.messages.clear()
+            state.conversation_path = None
             ui.print_panel(console, "[bold]new conversation[/bold]")
             return LoopSignal.CONTINUE
 
@@ -157,7 +158,13 @@ def dispatch(command: str, config: Config, messages: list[Message], console: Con
         case "copy":
             from lmti.commands.copy import handle_copy
 
-            handle_copy(console, messages)
+            handle_copy(console, state.messages)
+            return LoopSignal.CONTINUE
+
+        case "history":
+            from lmti.commands.history import handle_history
+
+            handle_history(console, state, render_markdown=config.settings.render_markdown)
             return LoopSignal.CONTINUE
 
         case _:
