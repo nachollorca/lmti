@@ -74,7 +74,7 @@ def handle_copy(console: Console, messages: list[Message]) -> None:
     items.append("[dim]Entire conversation (JSONL)[/dim]")
 
     idx = ui.prompt_selection(console, "Copy to clipboard:", items)
-    if idx is None:
+    if idx is None or not isinstance(idx, int):
         return
 
     payload, label = _build_copy_payload(messages, idx)

@@ -24,18 +24,12 @@ def print_panel(
     console.print(
         Panel(content, border_style=border_style, padding=(0, 1), expand=False, **panel_kwargs)
     )
-    console.print()
-
-
-ROLE_STYLES: dict[str, tuple[str, str]] = {
-    "user": ("green", "You"),
-    "assistant": ("blue", "Assistant"),
-}
 
 
 def print_header(console: Console, role: str) -> None:
     """Print a header rule for the given *role* (``'user'`` or ``'assistant'``)."""
-    color, label = ROLE_STYLES[role]
+    role_styles = {"user": ("green", "You"), "assistant": ("blue", "Assistant")}
+    color, label = role_styles[role]
     console.print()
     console.print(Rule(f"[bold {color}]{label}[/bold {color}]", align="left", style=color))
 
@@ -46,16 +40,22 @@ def prompt_selection(
     items: list[str],
     *,
     prompt_text: str = "Select an item number (empty to cancel): ",
-) -> int | None:
-    """Show a numbered list and prompt for a 1-based index.
+    extra_option: str | None = None,
+) -> int | str | None:
+    """Show a numbered list and prompt for a 1-based index or an extra option.
 
     Returns:
-        The selected 1-based index, or ``None`` on cancel.
+        The selected 1-based index (int), the extra option text (str), or ``None`` on cancel.
     """
     console.print()
-    console.print(f"[bold]{title}[/bold]")
+    console.print(f"[bold]{title}[/bold]", highlight=False)
     for i, item in enumerate(items, 1):
-        console.print(f"  {i}. {item}")
+        console.print(f"  [green]{i}[/green]. {item}", highlight=False)
+
+    last_idx = len(items)
+    if extra_option:
+        last_idx += 1
+        console.print(f"  [green]{last_idx}[/green]. {extra_option}", highlight=False)
     console.print()
 
     session = PromptSession()
@@ -63,9 +63,13 @@ def prompt_selection(
         choice = session.prompt(prompt_text).strip()
         if not choice:
             return None
-        if choice.isdigit() and 1 <= int(choice) <= len(items):
-            return int(choice)
-        console.print(f"[red]Invalid choice.[/red] Enter a number between 1 and {len(items)}.")
+        if choice.isdigit():
+            idx = int(choice)
+            if 1 <= idx <= len(items):
+                return idx
+            if extra_option and idx == last_idx:
+                return extra_option
+        console.print(f"[red]Invalid choice.[/red] Enter a number between 1 and {last_idx}.")
 
 
 def prompt_system_instruction(console: Console, config: Config) -> str | None:
@@ -78,10 +82,11 @@ def prompt_system_instruction(console: Console, config: Config) -> str | None:
     console.print("[bold]System Instruction:[/bold]")
     if config.settings.system_instruction:
         console.print(
-            Panel(config.settings.system_instruction, border_style="dim", title="current")
+            Panel(config.settings.system_instruction, border_style="dim", title="current"),
+            highlight=False,
         )
     else:
-        console.print("  [dim]No system instruction set.[/dim]")
+        console.print("  [dim]No system instruction set.[/dim]", highlight=False)
     console.print()
 
     session = PromptSession()
@@ -125,5 +130,5 @@ def print_welcome(console: Console, config: Config) -> None:
         f"[dim]Model:[/dim]  {config.settings.model}\n"
         f"[dim]Alt+Enter[/dim] for newlines  ·  Commands: {cmd_list}"
     )
-    console.print(Panel(welcome_text, border_style="dim", expand=False))
+    console.print(Panel(welcome_text, border_style="dim", expand=False), highlight=False)
     console.print()

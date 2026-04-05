@@ -8,54 +8,40 @@ from lmti import ui
 from lmti.config import Config
 
 
-def _parse_model_choice(choice: str, available_models: list[str]) -> str | None:
-    """Parse a model choice string into a model identifier.
-
-    Returns:
-        The matched model identifier, or ``None`` if invalid.
-    """
-    if choice.isdigit():
-        idx = int(choice)
-        if 1 <= idx <= len(available_models):
-            return available_models[idx - 1]
-        return None
-
-    if ":" in choice:
-        parts = choice.split(":")
-        if len(parts) == 2 and all(parts):
-            return choice
-
-    return None
+def _get_manual_model(console: Console) -> str | None:
+    """Prompt for a manual model identifier (provider:model_id)."""
+    session = PromptSession()
+    while True:
+        manual = session.prompt("Enter new model (provider:model_id): ").strip()
+        if not manual:
+            return None
+        if ":" in manual and all(manual.split(":", 1)):
+            return manual
+        console.print("[red]Error:[/red] Invalid format. Use 'provider:model_id'.")
 
 
 def handle_model(console: Console, config: Config) -> None:
     """Prompt the user to pick a new model, update config, and confirm."""
-    console.print()
-    console.print("[bold]Available models:[/bold]")
-    for i, m in enumerate(config.models, 1):
-        marker = " [dim](current)[/dim]" if m == config.settings.model else ""
-        console.print(f"  {i}. {m}{marker}")
-    console.print()
+    items = [
+        f"{m}{' [dim](current)[/dim]' if m == config.settings.model else ''}" for m in config.models
+    ]
 
-    model_completer = WordCompleter(config.models)
-    session = PromptSession()
+    selection = ui.prompt_selection(
+        console, "Available models:", items, extra_option="Add a manual model identifier"
+    )
 
-    while True:
-        choice = session.prompt(
-            "Select a model index or provide an identifier: ", completer=model_completer
-        )
-        choice = choice.strip()
+    if selection is None:
+        return
 
-        if not choice:
-            return  # cancelled
-
-        selected = _parse_model_choice(choice, config.models)
-        if selected:
-            config.settings.model = selected
-            config.save()
-            ui.print_panel(console, f"Model switched to [bold]{config.settings.model}[/bold]")
+    if isinstance(selection, int):
+        config.settings.model = config.models[selection - 1]
+    elif selection == "Add a manual model identifier":
+        manual = _get_manual_model(console)
+        if not manual:
             return
+        config.settings.model = manual
+    else:
+        return
 
-        console.print(
-            "[red]Error:[/red] Invalid model format. Use 'provider:model_id' or a number."
-        )
+    config.save()
+    ui.print_panel(console, f"Model switched to [bold]{config.settings.model}[/bold]")

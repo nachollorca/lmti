@@ -32,7 +32,7 @@ COMMANDS: dict[str, Command] = {
     "new": Command("Start a new conversation", "c-n", None),
     "model": Command("Switch the current model", "c-l", "commands.model"),
     "render": Command("Toggle Markdown rendering", "c-r", None),
-    "system": Command("Set or clear the system instruction", "c-i", None),
+    "system": Command("Set or clear the system instruction", "c-s", None),
     "copy": Command("Copy a message or conversation", "c-c", "commands.copy"),
 }
 
