@@ -1,6 +1,6 @@
 [project]
 name = "lmti"
-version = "1.3.0"
+version = "1.4.0"
 description = "Language Model Terminal Interface."
 requires-python = ">=3.12,<3.14"
 license = { text = "MIT" }

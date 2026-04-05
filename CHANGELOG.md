@@ -2,6 +2,27 @@
 
 <!-- version list -->
 
+## v1.4.0 (2026-04-05)
+
+### Chores
+
+- Remove residual TODO.md
+  ([`83ed85f`](https://github.com/nachollorca/lmti/commit/83ed85fa3dee389ec0bec12bb1c4f5314f6d9c34))
+
+### Documentation
+
+- Updste structure
+  ([`78de811`](https://github.com/nachollorca/lmti/commit/78de811194ebc5f00c5b1083d9424321ffd3b5b4))
+
+### Features
+
+- Add /undo command
+  ([`be789d5`](https://github.com/nachollorca/lmti/commit/be789d586c3124b6ec36f04c8c21c8bebcbbdb7b))
+
+- Implement /history , persist conversations
+  ([`c19f87b`](https://github.com/nachollorca/lmti/commit/c19f87b8c255977dcd8787c9486208ab66b46752))
+
+
 ## v1.3.0 (2026-04-05)
 
 ### Chores
