@@ -71,7 +71,7 @@ def handle_copy(console: Console, messages: list[Message]) -> None:
         return
 
     items = [_format_message_preview(msg) for msg in messages]
-    items.append(f"[dim]Entire conversation (JSONL)[/dim]")
+    items.append("[dim]Entire conversation (JSONL)[/dim]")
 
     idx = ui.prompt_selection(console, "Copy to clipboard:", items)
     if idx is None:
