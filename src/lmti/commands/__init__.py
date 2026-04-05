@@ -34,6 +34,7 @@ COMMANDS: dict[str, Command] = {
     "system": Command("Set or clear the system instruction", "escape s", None),
     "copy": Command("Copy a message or conversation", "escape c", "commands.copy"),
     "history": Command("Resume a previous conversation", "escape h", "commands.history"),
+    "undo": Command("Undo to a previous message", "escape u", "commands.undo"),
 }
 
 
@@ -165,6 +166,12 @@ def dispatch(command: str, config: Config, state, console: Console) -> LoopSigna
             from lmti.commands.history import handle_history
 
             handle_history(console, state, render_markdown=config.settings.render_markdown)
+            return LoopSignal.CONTINUE
+
+        case "undo":
+            from lmti.commands.undo import handle_undo
+
+            handle_undo(console, state)
             return LoopSignal.CONTINUE
 
         case _:
