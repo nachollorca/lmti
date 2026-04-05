@@ -3,7 +3,7 @@
 import argparse
 
 from lmti.config import Config
-from lmti.tui import run
+from lmti.repl import run
 
 
 def main():
