@@ -2,6 +2,36 @@
 
 <!-- version list -->
 
+## v1.3.0 (2026-04-05)
+
+### Chores
+
+- Change some bindings
+  ([`fe0f415`](https://github.com/nachollorca/lmti/commit/fe0f41533b288fddf1c85715fe954d681ca3c3c3))
+
+- Remove wrong f string
+  ([`2d2b074`](https://github.com/nachollorca/lmti/commit/2d2b07427475a03d72a0b9369a1fa82b0f30ea74))
+
+### Features
+
+- Gracefully exit on keyboard interrupt, improve key binding behavior
+  ([`0e09c5d`](https://github.com/nachollorca/lmti/commit/0e09c5dd04d8efb837baee8fc8cdd1e363a32bae))
+
+### Refactoring
+
+- Make things better hjahajahaha
+  ([`8484637`](https://github.com/nachollorca/lmti/commit/84846377833e17a7aa0dbaa914a34a7b162c118d))
+
+- Solve questions
+  ([`e4d452f`](https://github.com/nachollorca/lmti/commit/e4d452f23a0330eb228e78d90faea3492874ca44))
+
+- Split tui into ui / commands / errors.
+  ([`74e3bc2`](https://github.com/nachollorca/lmti/commit/74e3bc2b621fc339a09f9f39c0107003a2575ccf))
+
+- Use the prompt_selection for models too, add an option for manual input (others)
+  ([`6ab3eca`](https://github.com/nachollorca/lmti/commit/6ab3eca2258721dafa07c2ce692887a35032f413))
+
+
 ## v1.2.0 (2026-04-02)
 
 ### Chores
