@@ -8,9 +8,9 @@ FAQ:
 - **Can I talk with LMs from different providers from the terminal?** Yes :)
 - **Does the app have access to my files?** No
 - **Can the app run terminal commands?** Nope
-- Can the app execute code? Nein
-- Does the app have any sort of agentic loop? Negative
-- Can I connect the app to MCPs or other tools? Also no
+- **Can the app execute code?** Nein
+- **Does the app have any sort of agentic loop?** Negative
+- **Can I connect the app to MCPs or other tools?** Also no
 
 ## Install
 `uv tool install lmti`
@@ -23,9 +23,6 @@ lmti
 # Start with a specific model
 lmti -m vertex:gemini-2.5-flash
 ```
-
-## Commands
-[List help here]
 
 ## Config
 Config is stored at `~/.config/lmti/config.yaml`.
@@ -49,8 +46,11 @@ models:
 ```text
 src/lmti/
 ├── cli.py      # Argument parsing and entry point
-├── config.py   # Configuration loading and persistence
-├── tui.py      # Terminal UI implementation (prompt-toolkit)
+├── config.py   # Configuration management
+├── errors.py   # Error handling
+├── repl.py     # Main REPL loop logic
+├── ui.py       # Terminal UI (prompt-toolkit and rich)
+├── commands/   # Slash command implementations
 └── __init__.py
 ```
 
