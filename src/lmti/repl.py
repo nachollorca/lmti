@@ -64,7 +64,7 @@ def _repl(config: Config, console: Console) -> None:
 
         try:
             ui.print_header(console, "user")
-            user_input = session.prompt([("class:prompt", "❯ ")])
+            user_input = session.prompt([("class:prompt", "❯ ")])  # noqa: RUF001
         except EOFError:
             break
 

@@ -69,3 +69,5 @@ We use `just` for development tasks. Use:
 
 ## License
 MIT
+
+_Done with [`mold`](https://github.com/nachollorca/mold) template_
