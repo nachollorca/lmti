@@ -5,7 +5,7 @@ Stores conversations as JSONL files in ``~/.lmti/history/``.
 
 import json
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from lmdk.datatypes import AssistantMessage, Message, UserMessage
@@ -26,14 +26,14 @@ class ConversationMeta:
 
 def _timestamp_to_filename() -> str:
     """Generate a filesystem-safe filename from the current UTC time."""
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=UTC)
     return now.strftime("%Y-%m-%dT%H-%M-%S") + ".jsonl"
 
 
 def _filename_to_timestamp(name: str) -> datetime:
     """Parse a timestamp from a history filename."""
     stem = name.removesuffix(".jsonl")
-    return datetime.strptime(stem, "%Y-%m-%dT%H-%M-%S").replace(tzinfo=timezone.utc)
+    return datetime.strptime(stem, "%Y-%m-%dT%H-%M-%S").replace(tzinfo=UTC)
 
 
 def _read_preview(path: Path) -> str:

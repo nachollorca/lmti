@@ -32,7 +32,7 @@ def _copy_to_clipboard(text: str) -> bool:
             case _:
                 args = [path]
         try:
-            subprocess.run(args, input=text.encode(), check=True)  # noqa: S603
+            subprocess.run(args, input=text.encode(), check=True)
             return True
         except (subprocess.CalledProcessError, OSError):
             continue
