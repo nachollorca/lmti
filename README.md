@@ -4,6 +4,8 @@ Often I just want to talk to LMs without the agentic clutter: I dont want it to 
 
 For that, I normally have to log into a WebApp from a provider (i.e. Mistral LeChat, Gemini, ChatGPT). But I live on the terminal, so I made a thin wrapper.
 
+![assets/demo.gif](assets/demo.gif)
+
 If somehow you landed here but you are looking for an actual agent that can manage your system, I'd recommend you look into [pi](https://pi.dev/), [opencode](https://opencode.ai/) or [mistral-vibe](https://github.com/mistralai/mistral-vibe) (in that order). If your desire is to become vendor locked and further push private companies in their quest for the oligopoly, you could check Claude Code or Codex, I guess :)
 
 ## FAQ
