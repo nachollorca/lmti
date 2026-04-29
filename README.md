@@ -1,21 +1,23 @@
 # Language Model Terminal Interface
 
-Oftentimes I just want to talk to LMs, without the agentic clutter: I dont want it to read my stuff, access my files or consume through a gazillion tokens of tools, skills, MCPs and what not. I just want a recipe for tika masala, c'mon :(
+Often I just want to talk to LMs without the agentic clutter: I dont want it to read my stuff, access my files or consume through a gazillion tokens of tools, skills, MCPs and what not. I just want a recipe for gazpacho, c'mon :(
 
-For that I normally have to log into the webapps from the provider (i.e. Mistral LeChat, Gemini, ChatGPT). But I live on the terminal. So I made a thin wrapper bc it is 2026 and programming is easy
+For that, I normally have to log into a WebApp from a provider (i.e. Mistral LeChat, Gemini, ChatGPT). But I live on the terminal, so I made a thin wrapper.
 
-FAQ:
-- **Can I talk with LMs from different providers from the terminal?** Yes :)
-- **Does the app have access to my files?** No
-- **Can the app run terminal commands?** Nope
-- **Can the app execute code?** Nein
-- **Does the app have any sort of agentic loop?** Negative
-- **Can I connect the app to MCPs or other tools?** Also no
+If somehow you landed here but you are looking for an actual agent that can manage your system, I'd recommend you look into [pi](https://pi.dev/), [opencode](https://opencode.ai/) or [mistral-vibe](https://github.com/mistralai/mistral-vibe) (in that order). If your desire is to become vendor locked and further push private companies in their quest for the oligopoly, you could check Claude Code or Codex, I guess :)
+
+## FAQ
+- Can I talk with LMs from different providers from the terminal? **Yes :)**
+- Does the app have access to my files? **No**
+- Can the app run terminal commands? **Nope**
+- Can the app execute code? **Nein**
+- Does the app have any sort of agentic loop? **Negative**
+- Can I connect the app to MCPs or other tools? **Also no**
 
 ## Install
 `uv tool install lmti`
 
-## Gettint started
+## Use
 ```bash
 # Start with the default model
 lmti
@@ -23,6 +25,8 @@ lmti
 # Start with a specific model
 lmti -m vertex:gemini-2.5-flash
 ```
+`lmti` does support several commands to reset a conversation, undo some message, change models, etc.
+Simply type forward slash (`/`) while on the REPL to see a list of supported actions.
 
 ## Config
 Config is stored at `~/.config/lmti/config.yaml`.
@@ -59,7 +63,7 @@ We use `just` for development tasks. Use:
 - `just sync`: Updates lockfile and syncs environment.
 - `just format`: Lints and formats with `ruff`.
 - `just check-types`: Static analysis with `ty`.
-- `just analyze-complexity`: Cyclomatic complexity checks with `complexipy`.
+- `just check-complexity`: Cyclomatic complexity checks with `complexipy`.
 - `just test`: Runs pytest with 90% coverage threshold.
 
 ### Contribute
