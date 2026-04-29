@@ -14,10 +14,10 @@ If somehow you landed here but you are looking for an actual agent that can mana
 - Does the app have any sort of agentic loop? **Negative**
 - Can I connect the app to MCPs or other tools? **Also no**
 
-## Install
+## Installation
 `uv tool install lmti`
 
-## Use
+## Usage
 ```bash
 # Start with the default model
 lmti
