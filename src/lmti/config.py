@@ -13,7 +13,7 @@ CONFIG_PATH = Path.home() / ".config" / "lmti" / "config.yaml"
 
 AVAILABLE_MODELS = [
     "mistral:mistral-small-2603",
-    "mistral:mistral-large-2512",
+    "mistral:mistral-medium-3.5",
     "mistral:devstral-2512",
     "vertex:gemini-2.5-flash",
     "vertex:gemini-3-flash-preview",
@@ -57,10 +57,10 @@ class Config(BaseModel):
             data = yaml.safe_load(path.read_text()) or {}
             config = cls(**data)
 
-            # Sync available models if they differ from the constant
-            if config.models != AVAILABLE_MODELS:
-                config.models = list(AVAILABLE_MODELS)
-                config.save(path)
+            # Merge custom models: keep AVAILABLE_MODELS, append any custom ones
+            custom_models = [m for m in config.models if m not in AVAILABLE_MODELS]
+            config.models = list(AVAILABLE_MODELS) + custom_models
+            config.save(path)
         except Exception:
             config = cls()
 
