@@ -27,8 +27,8 @@ lmti
 # Start with a specific model
 lmti -m vertex:gemini-2.5-flash
 ```
-`lmti` does support several commands to reset a conversation, undo some message, change models, etc.
-Simply type forward slash (`/`) while on the REPL to see a list of supported actions.
+`lmti` **supports several commands:** to reset a conversation, undo some message, change models, etc.
+Simply type forward slash (`/`) while on the REPL to see a list of actions.
 
 ## Config
 Config is stored at `~/.config/lmti/config.yaml`.
@@ -68,6 +68,8 @@ We use `just` for development tasks. Use:
 - `just check-complexity`: Cyclomatic complexity checks with `complexipy`.
 - `just test`: Runs pytest with 90% coverage threshold.
 
+See [`justfile`](justfile) for a complete list of dev commands.
+
 ### Contribute
 1. **Hooks**: Install pre-commit hooks via `just install-hooks`.
 2. **Issues**: Open an issue first using the default template.
@@ -76,4 +78,4 @@ We use `just` for development tasks. Use:
 ## License
 MIT
 
-_Done with [`mold`](https://github.com/nachollorca/mold) template_
+_Made with [`mold`](https://github.com/nachollorca/mold) template_
