@@ -2,6 +2,56 @@
 
 <!-- version list -->
 
+## v1.5.0 (2026-05-01)
+
+### Continuous Integration
+
+- Remove duplicated arguments from prek in ci
+  ([`15ac121`](https://github.com/nachollorca/lmti/commit/15ac121aef1e31906fdbe7026a420a43dd74343b))
+
+- Upgrade template to mold
+  ([`90e2ac0`](https://github.com/nachollorca/lmti/commit/90e2ac0a53257ca39298accb6f612b3953eac0a0))
+
+### Documentation
+
+- Add demo gif
+  ([`1971063`](https://github.com/nachollorca/lmti/commit/1971063f65f748aaead807482a59bf91bab48ea1))
+
+- Be consistent with sections in readme
+  ([`7a98f0e`](https://github.com/nachollorca/lmti/commit/7a98f0e65591ea1d5363959587e648063a964677))
+
+- Put some dashes in the FAQ because it was making me nervous
+  ([`4d75bac`](https://github.com/nachollorca/lmti/commit/4d75bac7fd93976b9c79eb1469b411d9c218f1db))
+
+- Revise README content and fix typos
+  ([`559e280`](https://github.com/nachollorca/lmti/commit/559e280014377f52adff7d8cc77d5edf88a0d99a))
+
+### Features
+
+- **config**: Make custom models introduced by the user persistent
+  ([`256f5b9`](https://github.com/nachollorca/lmti/commit/256f5b93df290eac599a2f26cf95e88fdfb02432))
+
+### Testing
+
+- Add tests scaffolding with shared console and prompt fixtures
+  ([`b3512dd`](https://github.com/nachollorca/lmti/commit/b3512ddc8236db74a8c44139effd908ecd12062f))
+
+- Cover cli entry point and repl loop
+  ([`8ea080b`](https://github.com/nachollorca/lmti/commit/8ea080b1286508b50842652bf25de72f600990f8))
+
+- Cover command registry and dispatch
+  ([`723dd6a`](https://github.com/nachollorca/lmti/commit/723dd6a554a5f45bf6f50aed79f2677e55b1a033))
+
+- Cover config and history modules
+  ([`291f686`](https://github.com/nachollorca/lmti/commit/291f686c1db5238e2b178aa985eb1f75f2dc8bae))
+
+- Cover slash command handlers (undo, copy, model, history)
+  ([`a29973f`](https://github.com/nachollorca/lmti/commit/a29973f7513d494cfcbda3cbdf5dcb37394f80af))
+
+- Cover ui rendering helpers and error handlers
+  ([`521bd86`](https://github.com/nachollorca/lmti/commit/521bd86cbbe25281a8c5e6d9b9f6d641eaf706e1))
+
+
 ## v1.4.0 (2026-04-05)
 
 ### Chores
