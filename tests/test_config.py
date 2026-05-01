@@ -40,10 +40,11 @@ def test_models_drift_triggers_resave(tmp_path):
     path = tmp_path / "config.yaml"
     path.write_text(yaml.dump({"models": ["old:model"]}))
     config = Config.load(path)
-    assert config.models == AVAILABLE_MODELS
+    # Custom models are preserved, hardcoded models are prepended
+    assert config.models == [*AVAILABLE_MODELS, "old:model"]
     # Re-read raw to confirm it was persisted.
     persisted = yaml.safe_load(path.read_text())
-    assert persisted["models"] == AVAILABLE_MODELS
+    assert persisted["models"] == [*AVAILABLE_MODELS, "old:model"]
 
 
 def test_corrupt_yaml_falls_back_to_defaults(tmp_path):
