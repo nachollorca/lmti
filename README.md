@@ -9,12 +9,12 @@ For that, I normally have to log into a WebApp from a provider (i.e. Mistral LeC
 If somehow you landed here but you are looking for an actual agent that can manage your system, I'd recommend you look into [pi](https://pi.dev/), [opencode](https://opencode.ai/) or [mistral-vibe](https://github.com/mistralai/mistral-vibe) (in that order). If your desire is to become vendor locked and further push private companies in their quest for the oligopoly, you could check Claude Code or Codex, I guess :)
 
 ## FAQ
-- Can I talk with LMs from different providers from the terminal? **Yes :)**
-- Does the app have access to my files? **No**
-- Can the app run terminal commands? **Nope**
-- Can the app execute code? **Nein**
-- Does the app have any sort of agentic loop? **Negative**
-- Can I connect the app to MCPs or other tools? **Also no**
+- Can I talk with LMs from different providers from the terminal? - **Yes :)**
+- Does the app have access to my files? - **No**
+- Can the app run terminal commands? - **Nope**
+- Can the app execute code? - **Nein**
+- Does the app have any sort of agentic loop? - **Negative**
+- Can I connect the app to MCPs or other tools? - **Also no**
 
 ## Installation
 `uv tool install lmti`
