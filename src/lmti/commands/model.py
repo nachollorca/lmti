@@ -39,6 +39,9 @@ def handle_model(console: Console, config: Config) -> None:
         if not manual:
             return
         config.settings.model = manual
+        # Persist custom model in the models list
+        if manual not in config.models:
+            config.models.append(manual)
     else:
         return
 
