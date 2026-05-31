@@ -46,6 +46,14 @@ models:
 - vertex:gemini-2.5-flash
 ```
 
+## Known limitations
+
+With `render_markdown: true` (the default), assistant replies are streamed through [Rich](https://github.com/Textualize/rich) `Live` + `Markdown`. In practice you may see duplicated lines (“echo”), layout glitches, or other artifacts while tokens arrive. This comes from how Rich redraws live content when output overflows the terminal—not from the model itself.
+
+Upstream workarounds exist (for example [chatlas #71](https://github.com/posit-dev/chatlas/pull/71), which monkeypatches `LiveRender` for [rich #3263](https://github.com/Textualize/rich/issues/3263) until [rich #3637](https://github.com/Textualize/rich/pull/3637) lands), but they do not fully solve streaming markdown in our stack. A durable fix likely means replacing the current **prompt-toolkit + Rich** UI with something built for live TUI updates (e.g. [Textual](https://github.com/Textualize/textual)). That is a large refactor and is tracked in [#14](https://github.com/nachollorca/lmti/issues/14)—not planned for the near term.
+
+Until then you can turn off live markdown with `/render` or set `render_markdown: false` in config.
+
 ## Development
 
 ### Structure
