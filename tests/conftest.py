@@ -35,3 +35,13 @@ def fake_prompt(monkeypatch):
         return queue
 
     return _install
+
+
+@pytest.fixture
+def config_paths(monkeypatch, tmp_path):
+    """Redirect settings and auth files to a temporary directory."""
+    settings = tmp_path / "lmti.yaml"
+    auth = tmp_path / "auth.yaml"
+    monkeypatch.setattr("lmti.config.SETTINGS_PATH", settings)
+    monkeypatch.setattr("lmti.config.AUTH_PATH", auth)
+    return settings, auth

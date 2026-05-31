@@ -11,8 +11,7 @@ def test_handle_error_generic(console):
     assert "boom" in console.export_text()
 
 
-def test_handle_error_auth_saves_keys(console, monkeypatch, tmp_path, fake_prompt):
-    monkeypatch.setattr("lmti.config.CONFIG_PATH", tmp_path / "c.yaml")
+def test_handle_error_auth_saves_keys(console, monkeypatch, config_paths, fake_prompt):
 
     class _StubProvider:
         required_env = ("MISTRAL_API_KEY",)
@@ -27,8 +26,7 @@ def test_handle_error_auth_saves_keys(console, monkeypatch, tmp_path, fake_promp
     assert "saved" in console.export_text().lower()
 
 
-def test_handle_error_auth_string_required_env(console, monkeypatch, tmp_path, fake_prompt):
-    monkeypatch.setattr("lmti.config.CONFIG_PATH", tmp_path / "c.yaml")
+def test_handle_error_auth_string_required_env(console, monkeypatch, config_paths, fake_prompt):
 
     class _StubProvider:
         required_env = "ONE_KEY"

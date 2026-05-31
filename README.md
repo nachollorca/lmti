@@ -31,19 +31,26 @@ lmti -m vertex:gemini-2.5-flash
 Simply type forward slash (`/`) while on the REPL to see a list of actions.
 
 ## Config
-Config is stored at `~/.config/lmti/config.yaml`.
-It handles your credentials and default settings.
-Many of these can also be modified through commands in the TUI:
+
+Settings live in `~/.config/lmti.yaml`; API keys in `~/.lmti/auth.yaml`.
+Conversation history is under `~/.lmti/history/`.
+Many settings can also be changed from the REPL (`/model`, `/render`, etc.).
+
+`~/.config/lmti.yaml`:
 
 ```yaml
-credentials:
-  MISTRAL_API_KEY: your-key-here
 settings:
   render_markdown: true
   model: mistral:mistral-small-2603
 models:
 - mistral:mistral-small-2603
 - vertex:gemini-2.5-flash
+```
+
+`~/.lmti/auth.yaml`:
+
+```yaml
+MISTRAL_API_KEY: your-key-here
 ```
 
 ## Known limitations
