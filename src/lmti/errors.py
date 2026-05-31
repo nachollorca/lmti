@@ -38,7 +38,7 @@ def _handle_auth_error(
     if any_saved:
         console.print(
             Panel(
-                "Configuration saved to [dim]~/.config/lmti/config.yaml[/dim]",
+                "Credentials saved to [dim]~/.lmti/auth.yaml[/dim]",
                 border_style="green",
                 padding=(0, 1),
                 expand=False,

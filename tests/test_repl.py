@@ -37,32 +37,27 @@ def test_run_handles_keyboard_interrupt(monkeypatch, console):
     assert "Bye" in console.export_text()
 
 
-def test_repl_eof_breaks(monkeypatch, console, tmp_path):
-    monkeypatch.setattr("lmti.config.CONFIG_PATH", tmp_path / "c.yaml")
+def test_repl_eof_breaks(monkeypatch, console):
     _install_fake_session(monkeypatch, [EOFError()])
     repl._repl(Config(), console)
 
 
-def test_repl_dispatches_command_break(monkeypatch, console, tmp_path):
-    monkeypatch.setattr("lmti.config.CONFIG_PATH", tmp_path / "c.yaml")
+def test_repl_dispatches_command_break(monkeypatch, console):
     _install_fake_session(monkeypatch, ["/exit"])
     repl._repl(Config(), console)
 
 
-def test_repl_dispatches_continue_then_eof(monkeypatch, console, tmp_path):
-    monkeypatch.setattr("lmti.config.CONFIG_PATH", tmp_path / "c.yaml")
+def test_repl_dispatches_continue_then_eof(monkeypatch, console):
     _install_fake_session(monkeypatch, ["/new", EOFError()])
     repl._repl(Config(), console)
 
 
-def test_repl_skips_empty_input(monkeypatch, console, tmp_path):
-    monkeypatch.setattr("lmti.config.CONFIG_PATH", tmp_path / "c.yaml")
+def test_repl_skips_empty_input(monkeypatch, console):
     _install_fake_session(monkeypatch, ["", EOFError()])
     repl._repl(Config(), console)
 
 
-def test_repl_sends_message_and_saves(monkeypatch, console, tmp_path):
-    monkeypatch.setattr("lmti.config.CONFIG_PATH", tmp_path / "c.yaml")
+def test_repl_sends_message_and_saves(monkeypatch, console):
     _install_fake_session(monkeypatch, ["hello", EOFError()])
 
     monkeypatch.setattr(
@@ -81,8 +76,7 @@ def test_repl_sends_message_and_saves(monkeypatch, console, tmp_path):
     assert isinstance(msgs[1], AssistantMessage)
 
 
-def test_repl_handles_send_error(monkeypatch, console, tmp_path):
-    monkeypatch.setattr("lmti.config.CONFIG_PATH", tmp_path / "c.yaml")
+def test_repl_handles_send_error(monkeypatch, console):
     _install_fake_session(monkeypatch, ["hi", EOFError()])
 
     def boom(**kwargs):
@@ -98,9 +92,8 @@ def test_repl_handles_send_error(monkeypatch, console, tmp_path):
     assert handled == ["RuntimeError"]
 
 
-def test_repl_signals(monkeypatch, console, tmp_path):
+def test_repl_signals(monkeypatch, console, config_paths):
     """Cover the LoopSignal.BREAK / CONTINUE branches in dispatch."""
-    monkeypatch.setattr("lmti.config.CONFIG_PATH", tmp_path / "c.yaml")
     _install_fake_session(monkeypatch, ["/render", "/exit"])
     monkeypatch.setattr("lmti.repl.dispatch", _scripted_dispatch())
     repl._repl(Config(), console)

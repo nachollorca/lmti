@@ -33,8 +33,7 @@ def test_dispatch_new_clears_state(state, console):
     assert state.conversation_path is None
 
 
-def test_dispatch_render_toggles_and_saves(state, console, tmp_path, monkeypatch):
-    monkeypatch.setattr("lmti.config.CONFIG_PATH", tmp_path / "c.yaml")
+def test_dispatch_render_toggles_and_saves(state, console, monkeypatch, config_paths):
     config = Config()
     assert config.settings.render_markdown is True
     dispatch("render", config, state, console)
@@ -43,16 +42,14 @@ def test_dispatch_render_toggles_and_saves(state, console, tmp_path, monkeypatch
     assert config.settings.render_markdown is True
 
 
-def test_dispatch_system_sets_instruction(state, console, tmp_path, monkeypatch):
-    monkeypatch.setattr("lmti.config.CONFIG_PATH", tmp_path / "c.yaml")
+def test_dispatch_system_sets_instruction(state, console, monkeypatch, config_paths):
     monkeypatch.setattr("lmti.ui.prompt_system_instruction", lambda console, config: "be terse")
     config = Config()
     dispatch("system", config, state, console)
     assert config.settings.system_instruction == "be terse"
 
 
-def test_dispatch_system_clears_instruction(state, console, tmp_path, monkeypatch):
-    monkeypatch.setattr("lmti.config.CONFIG_PATH", tmp_path / "c.yaml")
+def test_dispatch_system_clears_instruction(state, console, monkeypatch, config_paths):
     monkeypatch.setattr("lmti.ui.prompt_system_instruction", lambda console, config: None)
     config = Config()
     config.settings.system_instruction = "old"
