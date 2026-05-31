@@ -2,6 +2,19 @@
 
 <!-- version list -->
 
+## v1.5.1 (2026-05-31)
+
+### Bug Fixes
+
+- **config**: Divide keys and settings so that a user can share their .config safely
+  ([`dde2155`](https://github.com/nachollorca/lmti/commit/dde21551166cbf2095f7ee98632ef642640a2a02))
+
+### Documentation
+
+- Document the stream rendering problem
+  ([`7532f2b`](https://github.com/nachollorca/lmti/commit/7532f2b4bf76e4d6d450a3e29a27b858dab0fb03))
+
+
 ## v1.5.0 (2026-05-01)
 
 ### Continuous Integration
