@@ -3,6 +3,7 @@
 from pathlib import Path
 
 import pytest
+from lmdk.datatypes import UserMessage
 
 from lmti.commands import LoopSignal, dispatch
 from lmti.config import Config
@@ -12,7 +13,7 @@ from lmti.repl import ReplState
 @pytest.fixture
 def state():
     s = ReplState()
-    s.messages.append(type("M", (), {"role": "user", "content": "hi"})())
+    s.messages.append(UserMessage("hi"))
     s.conversation_path = Path("/tmp/whatever")
     return s
 
