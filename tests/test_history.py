@@ -4,7 +4,7 @@ import json
 from datetime import UTC, datetime
 
 import pytest
-from lmdk.datatypes import AssistantMessage, UserMessage
+from lmdk.datatypes import AssistantMessage, Message, UserMessage
 
 from lmti import history
 
@@ -43,7 +43,7 @@ def test_read_preview_unreadable(tmp_path):
 
 
 def test_save_conversation_writes_jsonl(tmp_path):
-    msgs = [UserMessage("hi"), AssistantMessage("yo")]
+    msgs: list[Message] = [UserMessage("hi"), AssistantMessage("yo")]
     path = history.save_conversation(msgs)
     lines = path.read_text().strip().split("\n")
     assert json.loads(lines[0]) == {"role": "user", "content": "hi"}

@@ -1,5 +1,10 @@
 """Tests for the command registry, completer, and key bindings."""
 
+from collections.abc import Sequence
+from typing import cast
+
+from prompt_toolkit.key_binding.key_processor import KeyPressEvent
+
 from lmti.commands import (
     COMMANDS,
     KeyBindingState,
@@ -32,8 +37,9 @@ def test_format_binding():
 
 def test_build_completer_words_and_meta():
     completer = build_completer()
-    assert set(completer.words) == {"/" + name for name in COMMANDS}
-    assert "Alt+M" in completer.meta_dict["/model"]
+    words = cast(Sequence[str], completer.words)
+    assert set(words) == {"/" + name for name in COMMANDS}
+    assert "Alt+M" in str(completer.meta_dict["/model"])
 
 
 def test_build_key_bindings_registers_all_commands():
@@ -60,7 +66,7 @@ def test_key_binding_handler_sets_state_action():
     class _Event:
         app = _App()
 
-    exit_binding.handler(_Event())
+    exit_binding.handler(cast(KeyPressEvent, _Event()))
     assert state.action == "exit"
 
 
@@ -80,5 +86,5 @@ def test_alt_enter_inserts_newline():
     class _Event:
         current_buffer = _Buffer()
 
-    newline_binding.handler(_Event())
+    newline_binding.handler(cast(KeyPressEvent, _Event()))
     assert inserted == ["\n"]

@@ -2,7 +2,7 @@
 
 import json
 
-from lmdk.datatypes import AssistantMessage, UserMessage
+from lmdk.datatypes import AssistantMessage, Message, UserMessage
 
 from lmti.commands import copy as copy_mod
 from lmti.commands.copy import (
@@ -23,14 +23,14 @@ def test_format_message_preview_long():
 
 
 def test_build_copy_payload_single_message():
-    msgs = [UserMessage("hello")]
+    msgs: list[Message] = [UserMessage("hello")]
     payload, label = _build_copy_payload(msgs, 1)
     assert payload == "hello"
     assert "user" in label and "#1" in label
 
 
 def test_build_copy_payload_whole_conversation():
-    msgs = [UserMessage("q"), AssistantMessage("a")]
+    msgs: list[Message] = [UserMessage("q"), AssistantMessage("a")]
     payload, label = _build_copy_payload(msgs, 3)  # len + 1
     lines = payload.split("\n")
     assert json.loads(lines[0]) == {"role": "user", "content": "q"}
